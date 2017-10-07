@@ -9,6 +9,8 @@ namespace Battle_sim_imp
 {
     public class Sim
     {
+        System.Random random;
+
         public const int blocksAiSeesInEachDir = 3;
 
         Block[,] map;
@@ -17,12 +19,15 @@ namespace Battle_sim_imp
 
         public Sim(int height, int width)
         {
+            random = new System.Random();
             //generate map
             map = new Block[height, width];
+            bodies = new List<Body>();
+            warriors = new List<Warrior>();
 
-            for (int i = 0; i < map.GetLength(1); i++)
+            for (int i = 0; i < height; i++)
             {
-                for (int j = 0; j < map.GetLength(2); j++)
+                for (int j = 0; j < width; j++)
                 {
                     map[i, j] = new Block(map, new Vector2(i, j));
                 }
@@ -115,7 +120,7 @@ namespace Battle_sim_imp
                 case 0:
                     if (blockLooksAt.warriorsAtThis.Count > 0)
                     {
-                        var lmb = blockLooksAt.warriorsAtThis[0].limbs[UnityEngine.Random.Range(0, blockLooksAt.warriorsAtThis[0].limbs.Count)];
+                        var lmb = blockLooksAt.warriorsAtThis[0].limbs[random.Next(0, blockLooksAt.warriorsAtThis[0].limbs.Count)];
                         return new Actions.AttackAction(lmb, 10, 50);
                     }
                     break;
@@ -129,6 +134,25 @@ namespace Battle_sim_imp
                     return new Actions.IdleAction();
             }
             throw new Exception("shi");
+        }
+
+        public void ExportData(List<BlockData> blocks, List<WarrData> warrs, List<BodyData> bods)
+        {
+            blocks.Clear();
+            warrs.Clear();
+            bods.Clear();
+            foreach (var item in map)
+            {
+                blocks.Add(new BlockData(item));
+            }
+            foreach (var item in warriors)
+            {
+                warrs.Add(new WarrData(item));
+            }
+            foreach (var item in bodies)
+            {
+                bods.Add(new BodyData(item));
+            }
         }
     }
 
@@ -153,7 +177,7 @@ namespace Battle_sim_imp
     {
         Block[,] mapThisAt;
         Vector2 velocity;
-        Vector2 pos;
+        public Vector2 pos;
         int ticksToFall;
 
         public Body(Vector2 pos, Vector2 velocity, int ticksLeftToFall, Block[,] map)

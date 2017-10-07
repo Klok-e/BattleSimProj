@@ -98,6 +98,7 @@ namespace Battle_sim_imp
         {
             public IdleAction()
             {
+                number = 4;
                 ticksToFinish = 1;
             }
 
@@ -121,6 +122,7 @@ namespace Battle_sim_imp
 
         public Limb(string name, float hp, float armor, bool isVital, Warrior wa)
         {
+            warrior = wa;
             this.name = name;
             this.hp = hp;
             armorPercent = armor;
@@ -157,8 +159,9 @@ namespace Battle_sim_imp
 
         public Actions.Action currentAction;
 
-        public Warrior(StructureOfWarrior warStrct, Block[,] map, Vector2 pos, int tm)
+        public Warrior(StructureOfWarrior warStrct, Block[,] map, Vector2 pos, int tm, AAi ai)
         {
+            this.ai = ai;
             blockThisAt = map[(int)Math.Round(pos.x), (int)Math.Round(pos.y)];
             team = tm;
 
