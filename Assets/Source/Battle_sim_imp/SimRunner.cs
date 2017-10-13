@@ -11,8 +11,10 @@ namespace Battle_sim_imp
     public struct BlockData
     {
         public Vector2 pos;
+        public bool empty;
         public BlockData(Block block)
         {
+            empty = block.empty;
             pos = block.pos;
         }
     }
@@ -47,12 +49,12 @@ namespace Battle_sim_imp
         public List<BodyData> bodyPoss;
         public object exportDataLock = new object();
 
-        public SimRunner(int width, int height)
+        public SimRunner(int width, int height, int warrOnEachSide)
         {
             blockPoss = new List<BlockData>();
             warrPoss = new List<WarrData>();
             bodyPoss = new List<BodyData>();
-            sim = new Battle_sim_imp.Sim(height, width);
+            sim = new Battle_sim_imp.Sim(width, height, warrOnEachSide);
         }
 
         public void StartLoop()
@@ -60,11 +62,11 @@ namespace Battle_sim_imp
             var time = Environment.TickCount;
             while (isRunning)
             {
-                Debug.Log(String.Format("{0} {1} {2}", Thread.CurrentThread.IsBackground, Thread.CurrentThread.ManagedThreadId, Thread.CurrentThread.ThreadState));
                 try
                 {
                     if (Environment.TickCount - time > 1000 / fps)
                     {
+                        Debug.Log(String.Format("{0} {1} {2}", Thread.CurrentThread.IsBackground, Thread.CurrentThread.ManagedThreadId, Thread.CurrentThread.ThreadState));
                         lock (exportDataLock)
                         {
                             sim.ExportData(blockPoss, warrPoss, bodyPoss);
@@ -72,7 +74,7 @@ namespace Battle_sim_imp
                         time = Environment.TickCount;
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     Debug.Log(e);
                 }

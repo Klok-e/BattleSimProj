@@ -120,7 +120,15 @@ namespace Battle_sim_imp
 
         Warrior warrior;
 
-        public Limb(string name, float hp, float armor, bool isVital, Warrior wa)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="hp"></param>
+        /// <param name="armor">percent of damage reflected</param>
+        /// <param name="isVital"></param>
+        /// <param name="wa"></param>
+        public Limb(string name, float hp, float armor, bool isVital, Warrior wa = null)
         {
             warrior = wa;
             this.name = name;
@@ -150,7 +158,7 @@ namespace Battle_sim_imp
 
         public int team;
 
-        public Block BlockThisAt { get { return blockThisAt; } set { blockThisAt = value; if (!value.warriorsAtThis.Contains(this)) value.warriorsAtThis.Add(this); } }
+        public Block BlockThisAt { get { return blockThisAt; } set { if (!value.warriorsAtThis.Contains(this)) { value.warriorsAtThis.Add(this); blockThisAt = value; } } }
         private Block blockThisAt;
         public Block[,] mapThisAt;
 
@@ -162,7 +170,7 @@ namespace Battle_sim_imp
         public Warrior(StructureOfWarrior warStrct, Block[,] map, Vector2 pos, int tm, AAi ai)
         {
             this.ai = ai;
-            blockThisAt = map[(int)Math.Round(pos.x), (int)Math.Round(pos.y)];
+            blockThisAt = map[(int)(pos.x), (int)(pos.y)];
             team = tm;
 
             mapThisAt = map;

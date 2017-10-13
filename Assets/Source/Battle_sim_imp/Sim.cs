@@ -9,6 +9,16 @@ namespace Battle_sim_imp
 {
     public class Sim
     {
+        public static StructureOfWarrior defaultWarStrct = new StructureOfWarrior()
+        {
+            blood = 1000,
+            str = new List<Limb>(){
+            new Limb("default", 50f, 0.01f, false),
+            new Limb("default", 50f, 0.01f, false),
+            new Limb("default", 50f, 0.01f, false)
+            }
+        };
+
         System.Random random;
 
         public const int blocksAiSeesInEachDir = 3;
@@ -17,19 +27,30 @@ namespace Battle_sim_imp
         List<Body> bodies;
         List<Warrior> warriors;
 
-        public Sim(int height, int width)
+        public Sim(int height, int width, int warrOnEachSide)
         {
             random = new System.Random();
             //generate map
             map = new Block[height, width];
             bodies = new List<Body>();
             warriors = new List<Warrior>();
+            
+            for (int i = 0; i < warrOnEachSide; i++)
+            {
+                var w = new Warrior(defaultWarStrct, map, new Vector2(1, 1), 0, new RandomAi(9001, 5, random));
+                warriors.Add(w);
+            }
+            for (int i = 0; i < warrOnEachSide; i++)
+            {
+                var w = new Warrior(defaultWarStrct, map, new Vector2(width - 2, height - 2), 1, new RandomAi(9001, 5, random));
+                warriors.Add(w);
+            }
 
             for (int i = 0; i < height; i++)
             {
                 for (int j = 0; j < width; j++)
                 {
-                    map[i, j] = new Block(map, new Vector2(i, j));
+                    map[i, j] = new Block(map, new Vector2(i, j)) { empty = (i == 0 || i == height - 1 || j == 0 || j == width - 1) ? false : true };
                 }
             }
         }
