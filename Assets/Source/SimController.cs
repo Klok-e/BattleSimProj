@@ -1,141 +1,144 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Battle_sim_imp;
 using System.Threading;
 using System;
 
 public class SimController : MonoBehaviour
 {
-    public GameObject blockPref;
+    public GameObject tilePref;
     public GameObject warrPref;
     public GameObject bodyPref;
+    public GameObject obstaclePref;
 
-    List<GameObject> blocks;
-    List<GameObject> warriors;
-    List<GameObject> bodies;
+    List<BlockController> blocks;
+    List<WarriorController> warriors;
+    List<BodyController> bodies;
 
-    Thread simThread;
-    SimRunner simRunner;
+    System.Random random;
+
+    public static StructureOfWarrior defaultWarStrct = new StructureOfWarrior()
+    {
+        blood = 1000,
+        str = new List<Limb>(){
+            new Limb("default", 50f, 0.01f, false),
+            new Limb("default", 50f, 0.01f, false),
+            new Limb("default", 50f, 0.01f, false)
+            }
+    };
+
     // Use this for initialization
     void Start()
     {
-        blocks = new List<GameObject>();
-        warriors = new List<GameObject>();
-        bodies = new List<GameObject>();
+        blocks = new List<BlockController>();
+        warriors = new List<WarriorController>();
+        bodies = new List<BodyController>();
 
-        simRunner = new SimRunner(100, 20,1);
-        Debug.Log(String.Format("{0} {1} {2}", Thread.CurrentThread.IsBackground, Thread.CurrentThread.ManagedThreadId, Thread.CurrentThread.ThreadState));
-
-        simThread = new Thread(simRunner.StartLoop);
-        simRunner.isRunning = true;
-        simThread.Start();
+        CreateNewMap(10, 10, 1);
     }
 
-    // Update is called once per frame
+    int time;
+    readonly int fps = 100;
     void Update()
     {
-        lock (simRunner.exportDataLock)
+        if (Environment.TickCount - time > 1000 / fps)
         {
-            if (blocks.Count > simRunner.blockPoss.Count)
+            //Tick();
+            time = Environment.TickCount;
+        }
+    }
+
+    public void Tick()
+    {
+        foreach (var body in bodies)
+        {
+            body.Tick();
+        }
+
+        foreach (var warrior in warriors)
+        {
+            if (warrior.currentAction!=null)
             {
-                throw new NotImplementedException();
-            }
-            if (warriors.Count > simRunner.warrPoss.Count)
-            {
-                throw new NotImplementedException();
-            }
-            if (bodies.Count > simRunner.bodyPoss.Count)
-            {
-                throw new NotImplementedException();
-            }
-
-            for (int i = 0; i < simRunner.blockPoss.Count; i++)
-            {
-                var blockItem = simRunner.blockPoss[i];
-
-                var setEmpty = blockItem.empty;
-                var setPos = blockItem.pos;
-                try
-                {
-                    var blockObjUnity = blocks[i].GetComponent<BlockController>();
-
-                    blockObjUnity.isEmpty = setEmpty;
-                    blockObjUnity.transform.position = setPos;
-                }
-                catch (ArgumentOutOfRangeException e)
-                {
-                    blocks.Add(CreateNewBlock(setPos, setEmpty));
-                }
-            }
-            for (int i = 0; i < simRunner.warrPoss.Count; i++)
-            {
-                var warrItem = simRunner.warrPoss[i];
-
-                var setPos = warrItem.pos;
-                try
-                {
-                    var warrObjUnity = warriors[i].GetComponent<WarriorController>();
-
-                    warrObjUnity.transform.position = setPos;
-                }
-                catch (ArgumentOutOfRangeException e)
-                {
-                    warriors.Add(CreateNewWarrior(setPos));
-                }
-            }
-            for (int i = 0; i < simRunner.bodyPoss.Count; i++)
-            {
-                var bodyItem = simRunner.bodyPoss[i];
-
-                var setPos = bodyItem.pos;
-                try
-                {
-                    var bodyObjUnity = bodies[i].GetComponent<BodyController>();
-
-                    bodyObjUnity.transform.position = setPos;
-                }
-                catch (ArgumentOutOfRangeException e)
-                {
-                    bodies.Add(CreateNewBody(setPos));
-                }
+                if (!warrior.currentAction.isFinished)
+                    warrior.Tick();
+                else
+                    warrior.Tick(warrior.ChooseAction());
             }
         }
     }
 
-    private GameObject CreateNewBlock(Vector2 pos, bool empty)
+    private void CreateNewMap(int height, int width, int warrOnEachSide)
     {
-        var newObj = Instantiate(blockPref, transform);
+        random = new System.Random();
 
-        var scrpt = newObj.GetComponent<BlockController>();
-        scrpt.isEmpty = empty;
-        scrpt.transform.position = pos;
+        //generate map
+        for (int i = 0; i < warrOnEachSide; i++)
+        {
+            var w = CreateNewWarrior(new Vector2(1, 1), defaultWarStrct, 0, new RandomAi(9001, 5, random));
+        }
 
-        return newObj;
+        for (int i = 0; i < height; i++)
+        {
+            for (int j = 0; j < width; j++)
+            {
+                var bl = CreateNewBlock(new Vector2(i, j), (i == 0 || i == height - 1 || j == 0 || j == width - 1) ? false : true);
+            }
+        }
     }
 
-    private GameObject CreateNewWarrior(Vector2 pos)
+    private BlockController CreateNewBlock(Vector2 pos, bool empty)
     {
-        var newObj = Instantiate(blockPref, transform);
+        if (empty)
+        {
+            var newObj = Instantiate(tilePref, transform);
 
-        var scrpt = newObj.GetComponent<BlockController>();
-        scrpt.transform.position = pos;
+            var scrpt = newObj.GetComponent<BlockController>();
+            scrpt.transform.position = pos;
 
-        return newObj;
+            blocks.Add(scrpt);
+            return scrpt;
+        }
+        else
+        {
+            var newObj = Instantiate(obstaclePref, transform);
+
+            var scrpt = newObj.GetComponent<BlockController>();
+            scrpt.transform.position = pos;
+
+            blocks.Add(scrpt);
+            return scrpt;
+        }
     }
 
-    private GameObject CreateNewBody(Vector2 pos)
+    private WarriorController CreateNewWarrior(Vector2 pos, StructureOfWarrior str, int team, AAi ai)
     {
-        var newObj = Instantiate(blockPref, transform);
+        var newObj = Instantiate(warrPref, transform);
 
-        var scrpt = newObj.GetComponent<BlockController>();
+        var scrpt = newObj.GetComponent<WarriorController>();
         scrpt.transform.position = pos;
 
-        return newObj;
+        scrpt.ai = ai;
+        scrpt.team = team;
+        scrpt.bloodRemaining = str.blood;
+        scrpt.limbs = new List<Limb>();
+        foreach (var l in str.str)
+        {
+            scrpt.limbs.Add(l.Copy(scrpt));
+        }
+        scrpt.speed = 0.01f;
+
+        warriors.Add(scrpt);
+        return scrpt;
     }
 
-    private void OnDestroy()
+    private BodyController CreateNewBody(Vector2 pos)
     {
-        simRunner.isRunning = false;
+        var newObj = Instantiate(bodyPref, transform);
+
+        var scrpt = newObj.GetComponent<BodyController>();
+        scrpt.transform.position = pos;
+
+        bodies.Add(scrpt);
+        return scrpt;
     }
 }
