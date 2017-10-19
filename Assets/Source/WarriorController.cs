@@ -9,23 +9,24 @@ public class WarriorController : MonoBehaviour
 
     private void Start()
     {
-        GatherDataOfEnvironment();
+        currentAction = new Actions.IdleAction();
     }
 
     void Update()
     {
         GetComponent<SpriteRenderer>().sprite = sprites[0];
-        GatherDataOfEnvironment();
+        //GatherDataOfEnvironment();
     }
 
     #region Warrior code
-    public float fitness;
 
+
+    public const float distanceOfAttack = 0.8f;
     public float speed;
     public AAi ai;
     public int team;
     public List<Limb> limbs;
-    public float bloodRemaining;
+
     public Actions.Action currentAction;
 
     public void Tick(Actions.Action action)
@@ -50,7 +51,6 @@ public class WarriorController : MonoBehaviour
     public readonly int sensorRange = 4;
     public readonly int raycastSensors = 5;
     public readonly int diffBetwSensorsInDeg = 15;
-    public int totalAmountOfSensors;
     private double[] GatherDataOfEnvironment()
     {
         var angles = new List<int>();
@@ -85,6 +85,7 @@ public class WarriorController : MonoBehaviour
             if (hit)
             {
                 Debug.DrawLine(pos, hit.point);
+                eyeData[j] = 1/hit.distance;
                 if (hit.collider.tag.Equals("Obstacle"))
                 {
                     Debug.Log(hit.point + "obst" + hit.distance);
@@ -105,15 +106,52 @@ public class WarriorController : MonoBehaviour
         dataData.AddRange(eyeData);
         dataData.Add(bloodRemaining);
         dataData.Add(team);
-
-        totalAmountOfSensors = dataData.Count;
-        return dataData.ToArray();
+        return dataData.ToArray();//12 sensors total
     }
 
     private Actions.Action PredictionToAction(double[] pred)
     {
-        throw new NotImplementedException();
+        Debug.Assert(pred.Length == HelperConstants.totalAmountOfOutputsOfNet);
+        /* [0] - angle
+         * [1] - speed
+         * [2] - whether to attack
+         * [3] - whether to dodge
+         * [4] - whether to block
+        */
+        if (pred[2] > pred[3] && pred[2] > pred[4])//attack
+        {
+            return new Actions.AttackAction(transform.forward.normalized * distanceOfAttack, 10, 20, this);
+        }
+        /*
+        else if (pred[3] > pred[2] && pred[3] > pred[4])//dodge
+        {
+            return new Actions.DodgeAction();
+        }
+        else if (pred[4] > pred[3] && pred[4] > pred[2])//block
+        {
+            return new Actions.BlockAction();
+        }*/
+        return new Actions.MoveAction((float)pred[1] * speed, new Vector2(Mathf.Cos((float)pred[0]), Mathf.Sin((float)pred[0])).normalized, this);
     }
+
+    #region Statistics
+    public float fitness;
+    #endregion
+
+    public float bloodRemaining;
+    public bool LoseBlood(float toLose)
+    {
+        GetComponent<ParticleSystem>().Play();
+        bloodRemaining -= toLose;
+        if (bloodRemaining <= 0)
+        {
+            gameObject.SetActive(false);
+            return true;
+        }
+        return false;
+    }
+
+
 
     public int GetActionNum()
     {
@@ -122,6 +160,15 @@ public class WarriorController : MonoBehaviour
     }
     #endregion
 }
+
+static class HelperConstants
+{
+    public const int totalAmountOfSensors = 12;
+    public const int totalAmountOfOutputsOfNet = 5;
+    public const float speedMultOfWa = 0.2f;
+    public const int complexityThreshold = 500;
+}
+
 public static class Actions
 {
     public abstract class Action
@@ -143,22 +190,33 @@ public static class Actions
 
     public class AttackAction : Action
     {
-        Limb dealDamageTo;
+        public const float radius = 0.2f;
+        Vector2 dealDamageAt;
         float damage;
+        WarriorController warr;
 
-        public AttackAction(Limb dealDamageTo, float dmg, int ticksLasts)
+        public AttackAction(Vector2 dealDamageAt, float dmg, int ticksLasts, WarriorController whoDeals)
         {
             number = 0;
 
+            warr = whoDeals;
+
             ticksToFinish = ticksLasts;
-            this.dealDamageTo = dealDamageTo;
+            this.dealDamageAt = dealDamageAt;
             damage = dmg;
         }
 
         public override void ActionStuff()
         {
             if (isFinished)
-                dealDamageTo.GetDamage(damage);
+            {
+                var coll = Physics2D.OverlapCircle(dealDamageAt, radius, LayerMask.GetMask("Warrior"));
+                if (coll)
+                {
+                    if (coll.GetComponent<WarriorController>().LoseBlood(damage))//TODO: random limbs must be
+                        warr.fitness += 1;
+                }
+            }
         }
     }
 
@@ -202,7 +260,10 @@ public static class Actions
         public override void ActionStuff()
         {
             if (isFinished)
-                moves.transform.position += new Vector3(direction.x, direction.y, 0);
+            {
+                moves.transform.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+                moves.transform.Translate(direction * speed);
+            }
         }
     }
 
@@ -252,7 +313,7 @@ public class Limb
     public void GetDamage(float dmg)
     {
         hp -= dmg;
-        warrior.bloodRemaining -= dmg;
+        warrior.LoseBlood(dmg);
         if (hp < 0) severed = true;
     }
 
