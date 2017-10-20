@@ -6,6 +6,7 @@ using System;
 using SharpNeat.Core;
 using SharpNeat.Phenomes;
 using SharpNeat.Genomes.Neat;
+using UnityEngine.UI;
 
 public class SimController : MonoBehaviour
 {
@@ -20,7 +21,10 @@ public class SimController : MonoBehaviour
 
     System.Random random;
 
-    int warriorsTotal = 10;
+    int warriorsTotal = 30;
+
+    public int height;
+    public int width;
 
     public static StructureOfWarrior defaultWarStrct = new StructureOfWarrior()
     {
@@ -41,7 +45,7 @@ public class SimController : MonoBehaviour
         warriors = new List<WarriorController>();
         bodies = new List<BodyController>();
 
-        CreateNewMap(20, 20, warriorsTotal / 2);
+        CreateNewMap(height, width, warriorsTotal / 2);
     }
 
     int time;
@@ -51,12 +55,13 @@ public class SimController : MonoBehaviour
     int timeFromStartOfEval = Environment.TickCount;
     void Update()
     {
+        ProcessUserInput();
         if (Environment.TickCount - time > 1000 / fps)
         {
             if ((Environment.TickCount - timeFromStartOfEval > timeFromStartOfEvalThreshold))
             {
+                AssignFitnessesAndPerformGeneration();
                 timeFromStartOfEval = Environment.TickCount;
-                PassGenerationAndAssign();
                 SpawnWarriors(warriorsTotal / 2);
             }
             Tick();
@@ -73,13 +78,14 @@ public class SimController : MonoBehaviour
 
         foreach (var warrior in warriors)
         {
-            if (warrior.currentAction != null)
+            if (warrior.currentAction != null && warrior.gameObject.activeSelf)
             {
                 if (!warrior.currentAction.isFinished)
                     warrior.Tick();
                 else
                     warrior.Tick(warrior.ChooseAction());
             }
+
         }
     }
 
@@ -96,11 +102,13 @@ public class SimController : MonoBehaviour
         {
             if (i % 2 == 0)
             {
-                var w = CreateNewWarrior(new Vector2(1, 1), defaultWarStrct, 0, new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random));
+                var w = CreateNewWarrior(new Vector2(1 + HelperConstants.warriorSpawnOffset, 1 + HelperConstants.warriorSpawnOffset),
+                    defaultWarStrct, 1, new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random));
             }
             else
             {
-                var w = CreateNewWarrior(new Vector2(5, 5), defaultWarStrct, 1, new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random));
+                var w = CreateNewWarrior(new Vector2(width - 2 - HelperConstants.warriorSpawnOffset, height - 2 - HelperConstants.warriorSpawnOffset),
+                    defaultWarStrct, 2, new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random));
             }
         }
         AssignToWarriors();
@@ -191,24 +199,50 @@ public class SimController : MonoBehaviour
         decoder = experiment.genomeDecoder;
         AssignToWarriors();
     }
-    /// <summary>
-    /// Implies that all genomes were already set a fitness
-    /// </summary>
-    private void PassGenerationAndAssign()
+
+    private void AssignFitnessesAndPerformGeneration()
     {
+        algorithm._currentGeneration++;
+        algorithm.CallThisBeforePerformGeneration();
+        for (int i = 0; i < algorithm.GenomeList.Count; i++)
+        {
+            algorithm.GenomeList[i].EvaluationInfo.SetFitness(warriors[i].fitness);
+        }
         algorithm.PerformOneGeneration();
         AssignToWarriors();
     }
 
     private void AssignToWarriors()
     {
+        double totalComplexity = 0;
         if (warriors.Count > 0)
         {
             for (int i = 0; i < algorithm.GenomeList.Count; i++)
             {
-                warriors[i].ai.network = decoder.Decode(algorithm.GenomeList[i]);
+                var phenome = decoder.Decode(algorithm.GenomeList[i]);
+                warriors[i].ai.network = phenome;
+
+                totalComplexity += algorithm.GenomeList[i].Complexity;
             }
         }
+        Debug.Log(totalComplexity / warriorsTotal);
+    }
+
+    public Text textToDisplay;
+    WarriorController currentlySelectedWarr;
+    private void ProcessUserInput()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            var coll = Physics2D.OverlapCircle(worldPoint, 0.5f);
+            if (coll)
+            {
+                currentlySelectedWarr = coll.GetComponent<WarriorController>();
+            }
+        }
+        if (currentlySelectedWarr != null)
+            textToDisplay.text = currentlySelectedWarr.toShowOnGui;
     }
 }
 

@@ -31,7 +31,12 @@ namespace Assets.Source
             _eaParams.SpecieCount = 10;
 
             _neatGenomeParams = new NeatGenomeParameters();
-            _neatGenomeParams.ActivationFn = new SharpNeat.Network.Sine();
+            _neatGenomeParams.ActivationFn = new SharpNeat.Network.Linear();
+            _neatGenomeParams.AddConnectionMutationProbability = 0.5;
+            _neatGenomeParams.AddNodeMutationProbability = 0.3;
+            _neatGenomeParams.DeleteConnectionMutationProbability = 0.4;
+            _neatGenomeParams.ConnectionWeightMutationProbability = 0.94;
+            _neatGenomeParams.InitialInterconnectionsProportion = 1;
         }
 
         public IGenomeDecoder<NeatGenome, IBlackBox> genomeDecoder;

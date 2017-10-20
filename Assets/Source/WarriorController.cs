@@ -7,21 +7,23 @@ public class WarriorController : MonoBehaviour
 {
     public Sprite[] sprites;
 
+    public string toShowOnGui;
+
     private void Start()
     {
         currentAction = new Actions.IdleAction();
+        GetComponent<SpriteRenderer>().sprite = sprites[0];
     }
 
     void Update()
     {
-        GetComponent<SpriteRenderer>().sprite = sprites[0];
-        //GatherDataOfEnvironment();
+
     }
 
-    #region Warrior code
+    #region Warrior
 
 
-    public const float distanceOfAttack = 0.8f;
+    public const float distanceOfAttack = 1f;
     public float speed;
     public AAi ai;
     public int team;
@@ -42,6 +44,7 @@ public class WarriorController : MonoBehaviour
 
     public Actions.Action ChooseAction()
     {
+        toShowOnGui = "";
         var data = GatherDataOfEnvironment();
         var pred = ai.Predict(data);
         var action = PredictionToAction(pred);
@@ -85,16 +88,16 @@ public class WarriorController : MonoBehaviour
             if (hit)
             {
                 Debug.DrawLine(pos, hit.point);
-                eyeData[j] = 1/hit.distance;
+                eyeData[j] = 1 / hit.distance;
                 if (hit.collider.tag.Equals("Obstacle"))
                 {
-                    Debug.Log(hit.point + "obst" + hit.distance);
+                    //Debug.Log(hit.point + "obst" + hit.distance);
                     eyeData[j + 1] = 1;
                 }
 
                 else if (hit.collider.tag.Equals("Warrior"))
                 {
-                    Debug.Log(hit.point + "warr" + hit.distance);
+                    //Debug.Log(hit.point + "warr" + hit.distance);
                     eyeData[j + 1] = 2;
                 }
                 eyeData[j] = hit.distance;
@@ -104,9 +107,15 @@ public class WarriorController : MonoBehaviour
         #endregion
 
         dataData.AddRange(eyeData);
-        dataData.Add(bloodRemaining);
+        dataData.Add(1 - (1 / bloodRemaining));
         dataData.Add(team);
-        return dataData.ToArray();//12 sensors total
+
+        #region string to show
+        var temp = dataData.ToArray();
+        toShowOnGui += Helpers.ArrayToString(temp) + "\n";
+        #endregion
+
+        return temp;//12 sensors total
     }
 
     private Actions.Action PredictionToAction(double[] pred)
@@ -118,9 +127,14 @@ public class WarriorController : MonoBehaviour
          * [3] - whether to dodge
          * [4] - whether to block
         */
+
+        #region to show
+        toShowOnGui += Helpers.ArrayToString(pred);
+        #endregion
+
         if (pred[2] > pred[3] && pred[2] > pred[4])//attack
         {
-            return new Actions.AttackAction(transform.forward.normalized * distanceOfAttack, 10, 20, this);
+            return new Actions.AttackAction(transform.TransformPoint(transform.up * distanceOfAttack), 100, 20, this);
         }
         /*
         else if (pred[3] > pred[2] && pred[3] > pred[4])//dodge
@@ -131,7 +145,7 @@ public class WarriorController : MonoBehaviour
         {
             return new Actions.BlockAction();
         }*/
-        return new Actions.MoveAction((float)pred[1] * speed, new Vector2(Mathf.Cos((float)pred[0]), Mathf.Sin((float)pred[0])).normalized, this);
+        return new Actions.MoveAction((float)pred[1] * speed, new Vector2(Mathf.Cos((float)pred[0] * 360 * Mathf.Deg2Rad), Mathf.Sin((float)pred[0] * 360 * Mathf.Deg2Rad)).normalized, this);
     }
 
     #region Statistics
@@ -141,7 +155,7 @@ public class WarriorController : MonoBehaviour
     public float bloodRemaining;
     public bool LoseBlood(float toLose)
     {
-        GetComponent<ParticleSystem>().Play();
+        transform.GetChild(0).GetComponent<ParticleSystem>().Play();
         bloodRemaining -= toLose;
         if (bloodRemaining <= 0)
         {
@@ -159,14 +173,6 @@ public class WarriorController : MonoBehaviour
         return currentAction.number;
     }
     #endregion
-}
-
-static class HelperConstants
-{
-    public const int totalAmountOfSensors = 12;
-    public const int totalAmountOfOutputsOfNet = 5;
-    public const float speedMultOfWa = 0.2f;
-    public const int complexityThreshold = 500;
 }
 
 public static class Actions
@@ -190,7 +196,7 @@ public static class Actions
 
     public class AttackAction : Action
     {
-        public const float radius = 0.2f;
+        public const float radius = 0.1f;
         Vector2 dealDamageAt;
         float damage;
         WarriorController warr;
@@ -208,8 +214,10 @@ public static class Actions
 
         public override void ActionStuff()
         {
+            DebugExtension.DebugWireSphere(dealDamageAt, radius);
             if (isFinished)
             {
+
                 var coll = Physics2D.OverlapCircle(dealDamageAt, radius, LayerMask.GetMask("Warrior"));
                 if (coll)
                 {

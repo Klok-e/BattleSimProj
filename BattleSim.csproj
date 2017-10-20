@@ -12,15 +12,12 @@
     <ProjectTypeGuids>{E097FAD1-6243-4DAD-9C02-E9B9EFC3FFC1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
-    <CompilerResponseFile>
-    </CompilerResponseFile>
+    <TargetFrameworkProfile></TargetFrameworkProfile>
+    <CompilerResponseFile></CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows64:19</UnityBuildTarget>
     <UnityVersion>2017.1.1f1</UnityVersion>
-    <RootNamespace>
-    </RootNamespace>
+    <RootNamespace></RootNamespace>
     <LangVersion>6</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
@@ -97,14 +94,14 @@
     <Reference Include="UnityEngine.HoloLens">
       <HintPath>D:/Programs/Unity/Editor/Data/UnityExtensions/Unity/UnityHoloLens/RuntimeEditor/UnityEngine.HoloLens.dll</HintPath>
     </Reference>
+    <Reference Include="log4net">
+      <HintPath>Assets/Source/Plugins/log4net.dll</HintPath>
+    </Reference>
     <Reference Include="Redzen">
       <HintPath>Assets/Source/Plugins/Redzen.dll</HintPath>
     </Reference>
     <Reference Include="SharpNeatLib">
       <HintPath>Assets/Source/Plugins/SharpNeatLib.dll</HintPath>
-    </Reference>
-    <Reference Include="log4net">
-      <HintPath>Assets/Source/Plugins/log4net.dll</HintPath>
     </Reference>
     <Reference Include="Managed/Mono.Cecil">
       <HintPath>D:/Programs/Unity/Editor/Data\Managed/Mono.Cecil.dll</HintPath>
@@ -114,6 +111,8 @@
     <Compile Include="Assets\Source\BattleExperiment.cs" />
     <Compile Include="Assets\Source\BlockController.cs" />
     <Compile Include="Assets\Source\BodyController.cs" />
+    <Compile Include="Assets\Source\DebugDrawingExtension\DebugExtension.cs" />
+    <Compile Include="Assets\Source\Helpers.cs" />
     <Compile Include="Assets\Source\SimController.cs" />
     <Compile Include="Assets\Source\Things\Ai.cs" />
     <Compile Include="Assets\Source\Things\CameraController.cs" />
