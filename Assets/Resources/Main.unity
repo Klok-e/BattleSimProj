@@ -3209,7 +3209,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tilePref: {fileID: 1176763123118448, guid: 4cb3508b28264084e8ec825c24213608, type: 2}
   warrPref: {fileID: 1901069952074520, guid: 571344f09d957fd45bcfc9e8d11fbe3d, type: 2}
-  bodyPref: {fileID: 1655149244895682, guid: a54dbbe3ce51f1145a50bd6442b009e0, type: 2}
+  projectilePref: {fileID: 1655149244895682, guid: a54dbbe3ce51f1145a50bd6442b009e0,
+    type: 2}
   obstaclePref: {fileID: 1025125970086404, guid: 6e638542d5388ae43809a45004e3a7d7,
     type: 2}
   height: 20

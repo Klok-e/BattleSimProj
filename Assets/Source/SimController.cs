@@ -14,12 +14,12 @@ public class SimController : MonoBehaviour
 
     public GameObject tilePref;
     public GameObject warrPref;
-    public GameObject bodyPref;
+    public GameObject projectilePref;
     public GameObject obstaclePref;
 
     List<BlockController> blocks;
     List<WarriorController> warriors;
-    List<BodyController> bodies;
+    List<ProjectileController> projectiles;
 
     System.Random random;
 
@@ -49,7 +49,7 @@ public class SimController : MonoBehaviour
         simInstance = this;
         blocks = new List<BlockController>();
         warriors = new List<WarriorController>();
-        bodies = new List<BodyController>();
+        projectiles = new List<ProjectileController>();
 
         CreateNewMap(width, height);
         experiment = CreateExperiment();
@@ -151,7 +151,7 @@ public class SimController : MonoBehaviour
     {
         for (int i = 0; i < 3; i++)//evaluations for stable train
         {
-            ResetWarriors(decoder, list);
+            ResetEvaluation(decoder, list);
             Debug.Log("Warriors reset");
             yield return StartCoroutine(Evaluate());
         }
@@ -168,7 +168,7 @@ public class SimController : MonoBehaviour
             totalComplexity += (float)warr.ai.genome.Complexity;
             mxComplexity = Math.Max(mxComplexity, (float)warr.ai.genome.Complexity);
 
-            warr.fitness=0;//delete fitness
+            warr.fitness = 0;//delete fitness
         }
         Debug.Log(String.Format("Max fitness is {0}; Mean fitnes is {1}; Max complexity is {2}; Mean complexity is {3}",
             mxFitness,
@@ -197,7 +197,7 @@ public class SimController : MonoBehaviour
         }
     }
 
-    private void ResetWarriors(IGenomeDecoder<NeatGenome, IBlackBox> deco, List<NeatGenome> genomes)
+    private void ResetEvaluation(IGenomeDecoder<NeatGenome, IBlackBox> deco, List<NeatGenome> genomes)
     {
         for (int i = 0; i < warriorsTotal; i++)
         {
@@ -215,6 +215,11 @@ public class SimController : MonoBehaviour
                 w.transform.position = new Vector2(width - 2 - HelperConstants.warriorSpawnOffset, height - 2 - HelperConstants.warriorSpawnOffset);
             }
         }
+        foreach (var item in projectiles)
+        {
+            Destroy(item.gameObject);
+        }
+        projectiles.Clear();
     }
 
     int time;
@@ -239,7 +244,7 @@ public class SimController : MonoBehaviour
 
     public void Tick()
     {
-        foreach (var body in bodies)
+        foreach (var body in projectiles)
         {
             body.Tick();
         }
@@ -299,19 +304,23 @@ public class SimController : MonoBehaviour
         }
         scrpt.speed = HelperConstants.speedMultOfWa;
         scrpt.rotationSpeed = HelperConstants.warriorRotationSpeed;
+        scrpt.isShooter = true;
 
         warriors.Add(scrpt);
         return scrpt;
     }
 
-    private BodyController CreateNewBody(Vector2 pos)
+    public ProjectileController CreateNewProjectile(Vector2 start, Vector2 direction, float damage, WarriorController shooter)
     {
-        var newObj = Instantiate(bodyPref, transform);
+        var newObj = Instantiate(projectilePref, transform);
 
-        var scrpt = newObj.GetComponent<BodyController>();
-        scrpt.transform.position = pos;
+        var scrpt = newObj.GetComponent<ProjectileController>();
+        scrpt.transform.position = start;
+        scrpt.direction = direction;
+        scrpt.damage = damage;
+        scrpt.whoShoots = shooter;
 
-        bodies.Add(scrpt);
+        projectiles.Add(scrpt);
         return scrpt;
     }
     #endregion

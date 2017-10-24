@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Obstacle
   - Warrior
+  - Projectile
   layers:
   - Default
   - TransparentFX
@@ -17,7 +18,7 @@ TagManager:
   - 
   - Obstacle
   - Warrior
-  - 
+  - Projectile
   - 
   - 
   - 

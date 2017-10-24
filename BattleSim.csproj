@@ -240,7 +240,6 @@
     <Compile Include="Assets\Source\BattleEvaluator.cs" />
     <Compile Include="Assets\Source\BattleExperiment.cs" />
     <Compile Include="Assets\Source\BlockController.cs" />
-    <Compile Include="Assets\Source\BodyController.cs" />
     <Compile Include="Assets\Source\Helpers.cs" />
     <Compile Include="Assets\Source\Plugins\Console.cs" />
     <Compile Include="Assets\Source\Plugins\DebugDrawingExtension\DebugExtension.cs" />
@@ -400,6 +399,7 @@
     <Compile Include="Assets\Source\Plugins\realSharpneat\Utility\UInt32IdGenerator.cs" />
     <Compile Include="Assets\Source\Plugins\realSharpneat\Utility\Utilities.cs" />
     <Compile Include="Assets\Source\Plugins\realSharpneat\Utility\XmlIoUtils.cs" />
+    <Compile Include="Assets\Source\ProjectileController.cs" />
     <Compile Include="Assets\Source\SimController.cs" />
     <Compile Include="Assets\Source\Things\Ai.cs" />
     <Compile Include="Assets\Source\Things\CameraController.cs" />
@@ -409,6 +409,7 @@
     <Compile Include="Assets\Source\WarriorController.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\evolved shooting population.xml" />
     <None Include="Assets\my evolved population.xml" />
     <None Include="Assets\myPopBackUp.xml" />
   </ItemGroup>

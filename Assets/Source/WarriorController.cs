@@ -72,9 +72,9 @@ public class WarriorController : MonoBehaviour
         return action;
     }
 
-    public readonly int sensorRange = 6;
+    public readonly int sensorRange = 16;
     public readonly int raycastSensors = 7;
-    public readonly int diffBetwSensorsInDeg = 22;
+    public readonly int diffBetwSensorsInDeg = 15;
     private double[] GatherDataOfEnvironment()
     {
         var angles = new List<int>();
@@ -100,7 +100,7 @@ public class WarriorController : MonoBehaviour
         var eyeData = new double[raycastSensors * 4];
 
         var pos = transform.position;
-        var mask = LayerMask.GetMask("Obstacle", "Warrior");
+        var mask = LayerMask.GetMask("Obstacle", "Warrior","Projectile");
         var j = 0;
         foreach (var angle in angles)
         {
@@ -110,17 +110,10 @@ public class WarriorController : MonoBehaviour
             {
                 Debug.DrawLine(pos, hit.point);
                 eyeData[j] = Math.Min(1 / hit.distance, 1);
-                if (Debug.isDebugBuild)
-                {
-
-                    if (eyeData[j] > 1)
-                        Debug.Log(hit.distance);
-
-                }
                 if (hit.collider.tag.Equals("Obstacle"))
                 {
                     //Debug.Log(hit.point + "obst" + hit.distance);
-                    eyeData[j + 1] = -1;
+                    eyeData[j + 1] = -1;//2nd elem is whether it is warrior or obstacle
                     eyeData[j + 2] = 0;//3rd element is team
                     eyeData[j + 3] = 0;//4th element is angle between this warrior and other
                 }
@@ -133,7 +126,13 @@ public class WarriorController : MonoBehaviour
                     eyeData[j + 2] = other.team == team ? 0 : 1;//0 if same team else 1
                     eyeData[j + 3] = Vector2.Angle(other.transform.up, transform.up) * Mathf.Deg2Rad;//4th element is angle between this warrior and other
                 }
-                eyeData[j] = hit.distance;
+                else if (hit.collider.tag.Equals("Projectile"))
+                {
+                    var projectile = hit.collider.GetComponent<ProjectileController>();
+                    eyeData[j + 1] = 0;
+                    eyeData[j + 2] = -1;//-1 - projectile
+                    eyeData[j + 3] = Vector2.Angle(transform.TransformPoint(projectile.direction), transform.up) * Mathf.Deg2Rad;
+                }
             }
             j += 4; //every eye must see distance and what is it
         }
@@ -172,7 +171,7 @@ public class WarriorController : MonoBehaviour
             if (!isShooter)
                 return new Actions.AttackMeleeAction(transform.TransformPoint(Vector3.up), 100, 20, this);
             else
-                return new Actions.AttackShootAction(Vector3.up, 80, 20, this);
+                return new Actions.AttackShootAction(transform.up, 80, 20, this);
         }
         /*
         else if (pred[3] > pred[2] && pred[3] > pred[4])//dodge
@@ -306,7 +305,7 @@ public static class Actions
             Debug.DrawRay(warr.transform.position, direction);
             if (isFinished)
             {
-                throw new NotImplementedException();
+                SimController.simInstance.CreateNewProjectile((Vector2)warr.transform.position + direction, direction, damage, warr);
             }
         }
     }

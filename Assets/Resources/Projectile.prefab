@@ -20,11 +20,12 @@ GameObject:
   m_Component:
   - component: {fileID: 4419812341100596}
   - component: {fileID: 212296426161421116}
-  - component: {fileID: 114809520971325936}
   - component: {fileID: 58223046889241048}
-  m_Layer: 0
+  - component: {fileID: 50521295426319834}
+  - component: {fileID: 114220605713997448}
+  m_Layer: 10
   m_Name: Projectile
-  m_TagString: Untagged
+  m_TagString: Projectile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -37,11 +38,31 @@ Transform:
   m_GameObject: {fileID: 1655149244895682}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -5.17, y: -1.02, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.25, y: 0.25, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!50 &50521295426319834
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1655149244895682}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_Interpolate: 1
+  m_SleepingMode: 1
+  m_CollisionDetection: 1
+  m_Constraints: 0
 --- !u!58 &58223046889241048
 CircleCollider2D:
   m_ObjectHideFlags: 1
@@ -56,8 +77,8 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
-  m_Radius: 0.5
---- !u!114 &114809520971325936
+  m_Radius: 0.4
+--- !u!114 &114220605713997448
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -68,6 +89,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3b9a8cccf24bc0428098da77aa644c6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  direction: {x: 0, y: 0}
+  whoShoots: {fileID: 0}
+  damage: 0
 --- !u!212 &212296426161421116
 SpriteRenderer:
   m_ObjectHideFlags: 1
@@ -82,7 +106,7 @@ SpriteRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 799010e6b3729d04e9ef23d57668d92a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -102,7 +126,7 @@ SpriteRenderer:
   m_SortingLayerID: -705597123
   m_SortingLayer: 1
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300004, guid: ed6b3dd7d3eb2d0459b57f53f8a55253, type: 3}
+  m_Sprite: {fileID: 21300008, guid: ed6b3dd7d3eb2d0459b57f53f8a55253, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

@@ -26,5 +26,6 @@ static class HelperConstants
     public const int complexityThreshold = 100;
     public const int warriorSpawnOffset = 4;
     public const float warriorRotationSpeed = 10f;
+    public const float projectileSpeed = 1f;
 }
 
