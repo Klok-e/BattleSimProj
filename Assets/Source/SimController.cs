@@ -10,6 +10,8 @@ using UnityEngine.UI;
 
 public class SimController : MonoBehaviour
 {
+    public static SimController simInstance;
+
     public GameObject tilePref;
     public GameObject warrPref;
     public GameObject bodyPref;
@@ -36,37 +38,203 @@ public class SimController : MonoBehaviour
             }
     };
 
+    Assets.Source.BattleExperiment experiment;
     // Use this for initialization
     void Start()
     {
+        Debug.Log("Main thread is " + System.Threading.Thread.CurrentThread.ManagedThreadId);
+
         Debug.Assert(warriorsTotal % 2 == 0);
 
+        simInstance = this;
         blocks = new List<BlockController>();
         warriors = new List<WarriorController>();
         bodies = new List<BodyController>();
 
-        CreateNewMap(height, width, warriorsTotal / 2);
+        CreateNewMap(width, height);
+        experiment = CreateExperiment();
+
+        Debug.Log(experiment._ea.RunState);
+
+        SpawnWarriors(warriorsTotal);
     }
 
-    int time;
-    readonly int fps = 100;
-
-    int timeFromStartOfEvalThreshold = 10000;
-    int timeFromStartOfEval = Environment.TickCount;
     void Update()
     {
         ProcessUserInput();
-        if (Environment.TickCount - time > 1000 / fps)
+    }
+
+    public bool userWantsToStart;
+    public IEnumerator StartPerformingGenerations()
+    {
+        if (!userWantsToStart)
         {
-            if ((Environment.TickCount - timeFromStartOfEval > timeFromStartOfEvalThreshold))
+            userWantsToStart = true;
+            for (int i = 0; ; i++)
             {
-                AssignFitnessesAndPerformGeneration();
-                timeFromStartOfEval = Environment.TickCount;
-                SpawnWarriors(warriorsTotal / 2);
+                Time.timeScale = timeScaleEvaluation;
+                if (userWantsToStart == false)
+                {
+                    break;
+                }
+
+                yield return StartCoroutine(experiment._ea.DoOneGeneration());
+                if (i % 3 == 0)
+                {
+                    //save
+                    experiment.SavePopulation("myPopBackUp.xml");
+                }
+
+                Time.timeScale = 1;
             }
-            Tick();
-            time = Environment.TickCount;
         }
+    }
+
+    public void LoadPopulation(string filename)
+    {
+        var battleEvaluator = new Assets.Source.BattleEvaluator<NeatGenome>();
+
+        experiment.CreateEvolutionAlgorithm(battleEvaluator, experiment.LoadPopulation(filename));
+    }
+
+    public void SavePopulation(string filename)
+    {
+        experiment.SavePopulation(filename);
+    }
+
+    float timeScaleEvaluation = 1;
+    public void SetTimeScaleEvaluation(float toSet)
+    {
+        timeScaleEvaluation = toSet;
+    }
+
+    private void DeleteMap()
+    {
+        foreach (var item in blocks)
+        {
+            Destroy(item.gameObject);
+        }
+        blocks.Clear();
+    }
+
+    public void CreateNewMap(int width, int height)
+    {
+        this.width = width;
+        this.height = height;
+        DeleteMap();
+        random = new System.Random();
+        //generate map
+        for (int i = 0; i < width; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                var bl = CreateNewBlock(new Vector2(i, j), (i == 0 || i == width - 1 || j == 0 || j == height - 1) ? false : true);
+            }
+        }
+        Debug.Log("Map created");
+    }
+
+    IGenomeDecoder<NeatGenome, IBlackBox> decoder;
+    private Assets.Source.BattleExperiment CreateExperiment()
+    {
+        var experiment = new Assets.Source.BattleExperiment();
+
+        var battleEvaluator = new Assets.Source.BattleEvaluator<NeatGenome>();
+
+        decoder = experiment.CreateDecoder();
+        experiment._ea = experiment.CreateEvolutionAlgorithm(battleEvaluator, decoder, warriorsTotal);
+        Debug.Log("Experiment created");
+        return experiment;
+    }
+
+    public IEnumerator StartEvaluatingGenomes(List<NeatGenome> list)
+    {
+        for (int i = 0; i < 3; i++)//evaluations for stable train
+        {
+            ResetWarriors(decoder, list);
+            Debug.Log("Warriors reset");
+            yield return StartCoroutine(Evaluate());
+        }
+
+        #region Log statistics and delete fitness
+        float totalFitness = 0;
+        float mxFitness = warriors[0].GetFitness();
+        float totalComplexity = 0;
+        float mxComplexity = (float)warriors[0].ai.genome.Complexity;
+        foreach (var warr in warriors)
+        {
+            totalFitness += warr.GetFitness();
+            mxFitness = Math.Max(mxFitness, warr.GetFitness());
+            totalComplexity += (float)warr.ai.genome.Complexity;
+            mxComplexity = Math.Max(mxComplexity, (float)warr.ai.genome.Complexity);
+
+            warr.fitness=0;//delete fitness
+        }
+        Debug.Log(String.Format("Max fitness is {0}; Mean fitnes is {1}; Max complexity is {2}; Mean complexity is {3}",
+            mxFitness,
+            totalFitness / warriorsTotal,
+            mxComplexity,
+            totalComplexity / warriorsTotal));
+        #endregion
+    }
+
+    #region Methods for evaluating
+    private void SpawnWarriors(int warrTot)
+    {
+        for (int i = 0; i < warrTot; i++)
+        {
+            WarriorController w;
+            if (i % 2 == 0)
+            {
+                w = CreateNewWarrior(new Vector2(1 + HelperConstants.warriorSpawnOffset, 1 + HelperConstants.warriorSpawnOffset),
+                    defaultWarStrct, 1, new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random));
+            }
+            else
+            {
+                w = CreateNewWarrior(new Vector2(width - 2 - HelperConstants.warriorSpawnOffset, height - 2 - HelperConstants.warriorSpawnOffset),
+                    defaultWarStrct, 2, new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random));
+            }
+        }
+    }
+
+    private void ResetWarriors(IGenomeDecoder<NeatGenome, IBlackBox> deco, List<NeatGenome> genomes)
+    {
+        for (int i = 0; i < warriorsTotal; i++)
+        {
+            var w = warriors[i];
+            IBlackBox box = null;
+            box = deco.Decode(genomes[i]);
+            w.ai.SetNetworkAndGenome(box, genomes[i]);
+            w.Revive();
+            if (w.team == 1)
+            {
+                w.transform.position = new Vector2(1 + HelperConstants.warriorSpawnOffset, 1 + HelperConstants.warriorSpawnOffset);
+            }
+            else
+            {
+                w.transform.position = new Vector2(width - 2 - HelperConstants.warriorSpawnOffset, height - 2 - HelperConstants.warriorSpawnOffset);
+            }
+        }
+    }
+
+    int time;
+    int fps = 100;
+    int ticksForEvalMax = 1000;
+    int ticksPassedFromStartEval = 0;
+    private IEnumerator Evaluate()
+    {
+        while (ticksPassedFromStartEval < ticksForEvalMax)
+        {
+            Tick();
+            ticksPassedFromStartEval++;
+            if (ticksPassedFromStartEval % 200 == 0) Debug.Log(ticksPassedFromStartEval + " ticks passed");
+            time = Environment.TickCount;
+
+            yield return new WaitForFixedUpdate();
+        }
+        ticksPassedFromStartEval = 0;
+
+
     }
 
     public void Tick()
@@ -85,53 +253,11 @@ public class SimController : MonoBehaviour
                 else
                     warrior.Tick(warrior.ChooseAction());
             }
-
         }
     }
+    #endregion
 
-    private void SpawnWarriors(int warrOnEachSide)
-    {
-        #region DestroyAllWarriors
-        foreach (var warr in warriors)
-        {
-            Destroy(warr.gameObject);
-        }
-        warriors.Clear();
-        #endregion
-        for (int i = 0; i < warrOnEachSide * 2; i++)
-        {
-            if (i % 2 == 0)
-            {
-                var w = CreateNewWarrior(new Vector2(1 + HelperConstants.warriorSpawnOffset, 1 + HelperConstants.warriorSpawnOffset),
-                    defaultWarStrct, 1, new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random));
-            }
-            else
-            {
-                var w = CreateNewWarrior(new Vector2(width - 2 - HelperConstants.warriorSpawnOffset, height - 2 - HelperConstants.warriorSpawnOffset),
-                    defaultWarStrct, 2, new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random));
-            }
-        }
-        AssignToWarriors();
-    }
-
-    private void CreateNewMap(int height, int width, int warrOnEachSide)
-    {
-        random = new System.Random();
-
-        CreateExperiment();
-
-        SpawnWarriors(warrOnEachSide);
-
-        //generate map
-        for (int i = 0; i < height; i++)
-        {
-            for (int j = 0; j < width; j++)
-            {
-                var bl = CreateNewBlock(new Vector2(i, j), (i == 0 || i == height - 1 || j == 0 || j == width - 1) ? false : true);
-            }
-        }
-    }
-
+    #region Create game object methods
     private BlockController CreateNewBlock(Vector2 pos, bool empty)
     {
         if (empty)
@@ -156,7 +282,7 @@ public class SimController : MonoBehaviour
         }
     }
 
-    private WarriorController CreateNewWarrior(Vector2 pos, StructureOfWarrior str, int team, AAi ai)
+    private WarriorController CreateNewWarrior(Vector2 pos, StructureOfWarrior str, int team, NeuralAI ai)
     {
         var newObj = Instantiate(warrPref, transform);
 
@@ -172,6 +298,7 @@ public class SimController : MonoBehaviour
             scrpt.limbs.Add(l.Copy(scrpt));
         }
         scrpt.speed = HelperConstants.speedMultOfWa;
+        scrpt.rotationSpeed = HelperConstants.warriorRotationSpeed;
 
         warriors.Add(scrpt);
         return scrpt;
@@ -187,47 +314,9 @@ public class SimController : MonoBehaviour
         bodies.Add(scrpt);
         return scrpt;
     }
+    #endregion
 
-
-    IGenomeDecoder<NeatGenome, IBlackBox> decoder;
-    SharpNeat.EvolutionAlgorithms.NeatEvolutionAlgorithm<NeatGenome> algorithm;
-    private void CreateExperiment()
-    {
-        var experiment = new Assets.Source.BattleExperiment();
-
-        algorithm = experiment.CreateEvolutionAlgorithm(new Assets.Source.BattleEvaluator<NeatGenome>(), warriorsTotal);
-        decoder = experiment.genomeDecoder;
-        AssignToWarriors();
-    }
-
-    private void AssignFitnessesAndPerformGeneration()
-    {
-        algorithm._currentGeneration++;
-        algorithm.CallThisBeforePerformGeneration();
-        for (int i = 0; i < algorithm.GenomeList.Count; i++)
-        {
-            algorithm.GenomeList[i].EvaluationInfo.SetFitness(warriors[i].fitness);
-        }
-        algorithm.PerformOneGeneration();
-        AssignToWarriors();
-    }
-
-    private void AssignToWarriors()
-    {
-        double totalComplexity = 0;
-        if (warriors.Count > 0)
-        {
-            for (int i = 0; i < algorithm.GenomeList.Count; i++)
-            {
-                var phenome = decoder.Decode(algorithm.GenomeList[i]);
-                warriors[i].ai.network = phenome;
-
-                totalComplexity += algorithm.GenomeList[i].Complexity;
-            }
-        }
-        Debug.Log(totalComplexity / warriorsTotal);
-    }
-
+    #region User input
     public Text textToDisplay;
     WarriorController currentlySelectedWarr;
     private void ProcessUserInput()
@@ -235,14 +324,24 @@ public class SimController : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            var coll = Physics2D.OverlapCircle(worldPoint, 0.5f);
+            var coll = Physics2D.OverlapCircle(worldPoint, 0.5f, LayerMask.GetMask("Warrior"));
+
             if (coll)
             {
                 currentlySelectedWarr = coll.GetComponent<WarriorController>();
+                currentlySelectedWarr.userControlled = true;
+            }
+            else
+            {
+                if (currentlySelectedWarr != null)
+                    currentlySelectedWarr.userControlled = false;
+                currentlySelectedWarr = null;
             }
         }
         if (currentlySelectedWarr != null)
             textToDisplay.text = currentlySelectedWarr.toShowOnGui;
     }
-}
 
+
+    #endregion
+}

@@ -7,12 +7,14 @@ public class CameraController : MonoBehaviour
     public float move_speed;
     public float zoomSpeed;
 
+    public static CameraController cameraInstance;
+
     //private GameController gameControllerInstance;
     private Vector3 offset;
 
     void Start()
     {
-
+        cameraInstance = this;
     }
 
     private void LateUpdate()

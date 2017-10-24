@@ -1,66 +1,66 @@
-﻿using SharpNeat.Phenomes;
+﻿using SharpNeat.Core;
+using SharpNeat.Genomes.Neat;
+using SharpNeat.Phenomes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Ue = UnityEngine;
 
-
-public abstract class AAi
+public class NeuralAI
 {
-    public IBlackBox network;
     public Random random;
     public int inputsNum;
     public int outputsNum;
 
-    public AAi(int inps, int outps, Random rand)
+    protected IBlackBox network;
+    public NeatGenome genome;
+
+    public NeuralAI(int inps, int outps, Random rand)
     {
         random = rand;
         inputsNum = inps;
         outputsNum = outps;
     }
 
-    public abstract double[] Predict(double[] inp);
-}
-
-public class NeuralAI : AAi
-{
-    public NeuralAI(int inps, int outps, Random rand) : base(inps, outps, rand)
+    public void SetNetworkAndGenome(IBlackBox net, NeatGenome gen)
     {
-
+        network = net;
+        genome = gen;
     }
 
-    public override double[] Predict(double[] inp)
+    public double[] Predict(double[] inp)
     {
-        Debug.Assert(network.InputCount == inputsNum);
-        Debug.Assert(network.OutputCount == outputsNum);
-
-        var arr = network.InputSignalArray;
-        for (int i = 0; i < inputsNum; i++)
+        if (network != null)
         {
-            arr[i] = inp[i];
-        }
-        network.Activate();
+            Debug.Assert(network.InputCount == inputsNum);
+            Debug.Assert(network.OutputCount == outputsNum);
 
-        var prediction =new double[outputsNum];
-        arr = network.OutputSignalArray;
-        for (int i = 0; i < outputsNum; i++)
+            var arr = network.InputSignalArray;
+            for (int i = 0; i < inputsNum; i++)
+            {
+                arr[i] = inp[i];
+            }
+            network.Activate();
+
+            var prediction = new double[outputsNum];
+            arr = network.OutputSignalArray;
+            for (int i = 0; i < outputsNum; i++)
+            {
+                prediction[i] = arr[i];
+            }
+            return prediction;
+        }
+        else
         {
-            prediction[i] = arr[i];
+            //Ue.Debug.Log("Network is null; outputing random");
+            return PredictRandom(inp);
         }
-        return prediction;
-    }
-}
-
-public class RandomAi : AAi
-{
-    public RandomAi(int inps, int outps, Random rand) : base(inps, outps, rand)
-    {
-
     }
 
-    public override double[] Predict(double[] inp)
+    private double[] PredictRandom(double[] inp)
     {
         var pred = new double[outputsNum];
         pred[0] = random.NextDouble() * 10 - 5;

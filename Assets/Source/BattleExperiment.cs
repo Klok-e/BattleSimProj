@@ -11,6 +11,9 @@ using SharpNeat.Phenomes;
 using SharpNeat.DistanceMetrics;
 using SharpNeat.SpeciationStrategies;
 using SharpNeat.EvolutionAlgorithms.ComplexityRegulation;
+using SharpNeat.Decoders.Neat;
+using SharpNeat.Decoders;
+using UnityEngine;
 
 namespace Assets.Source
 {
@@ -24,23 +27,41 @@ namespace Assets.Source
 
         public NeatEvolutionAlgorithmParameters _eaParams;
         public NeatGenomeParameters _neatGenomeParams;
+        NetworkActivationScheme _activationScheme;
+
+        public NeatEvolutionAlgorithm<NeatGenome> _ea;
 
         public BattleExperiment()
         {
+            _activationScheme = NetworkActivationScheme.CreateCyclicFixedTimestepsScheme(2);
+
             _eaParams = new NeatEvolutionAlgorithmParameters();
-            _eaParams.SpecieCount = 10;
+            _eaParams.SpecieCount = 5;
 
             _neatGenomeParams = new NeatGenomeParameters();
-            _neatGenomeParams.ActivationFn = new SharpNeat.Network.Linear();
+            //_neatGenomeParams.ActivationFn = new SharpNeat.Network.Linear();
             _neatGenomeParams.AddConnectionMutationProbability = 0.5;
             _neatGenomeParams.AddNodeMutationProbability = 0.3;
             _neatGenomeParams.DeleteConnectionMutationProbability = 0.4;
             _neatGenomeParams.ConnectionWeightMutationProbability = 0.94;
-            _neatGenomeParams.InitialInterconnectionsProportion = 1;
+            _neatGenomeParams.InitialInterconnectionsProportion = 0.2;
+
+            _neatGenomeParams.FeedforwardOnly = _activationScheme.AcyclicNetwork;
         }
 
-        public IGenomeDecoder<NeatGenome, IBlackBox> genomeDecoder;
-        public NeatEvolutionAlgorithm<NeatGenome> CreateEvolutionAlgorithm(BattleEvaluator<NeatGenome> evaluator, int populationSize)
+        public NeatGenomeDecoder CreateDecoder()
+        {
+            return new NeatGenomeDecoder(_activationScheme);
+        }
+
+        public NeatEvolutionAlgorithm<NeatGenome> CreateEvolutionAlgorithm(BattleEvaluator<NeatGenome> evaluator, IGenomeDecoder<NeatGenome, IBlackBox> genomeDecoder, int populationSize)
+        {
+            var genomeFactory = new NeatGenomeFactory(InputCount, OutputCount, _neatGenomeParams);
+            var genomeList = genomeFactory.CreateGenomeList(populationSize, 0);
+            return CreateEvolutionAlgorithm(evaluator, genomeList);
+        }
+
+        public NeatEvolutionAlgorithm<NeatGenome> CreateEvolutionAlgorithm(BattleEvaluator<NeatGenome> evaluator,List<NeatGenome> list)
         {
             IDistanceMetric distanceMetric = new ManhattanDistanceMetric(1.0, 0.0, 10.0);
             ISpeciationStrategy<NeatGenome> speciationStrategy = new KMeansClusteringStrategy<NeatGenome>(distanceMetric);
@@ -48,32 +69,38 @@ namespace Assets.Source
 
             NeatEvolutionAlgorithm<NeatGenome> neatEvolutionAlgorithm = new NeatEvolutionAlgorithm<NeatGenome>(_eaParams, speciationStrategy, complexityRegulationStrategy);
 
-            genomeDecoder = new SharpNeat.Decoders.Neat.NeatGenomeDecoder(SharpNeat.Decoders.NetworkActivationScheme.CreateAcyclicScheme());
-
             var genomeFactory = new NeatGenomeFactory(InputCount, OutputCount, _neatGenomeParams);
-            var genomeList = genomeFactory.CreateGenomeList(populationSize, 0);
 
-            neatEvolutionAlgorithm.Initialize(evaluator, genomeFactory, genomeList);
+            neatEvolutionAlgorithm.Initialize(evaluator, genomeFactory, list);
 
+            _ea = neatEvolutionAlgorithm;
             return neatEvolutionAlgorithm;
         }
-    }
 
-    class BattleEvaluator<TGenome> : IGenomeListEvaluator<TGenome>
-            where TGenome : class, IGenome<TGenome>
-    {
-        public ulong EvaluationCount { get; set; }
-
-        public bool StopConditionSatisfied { get; set; }
-
-        public void Evaluate(IList<TGenome> genomeList)
+        public IGenomeFactory<NeatGenome> CreateGenomeFactory()
         {
-
+            return new NeatGenomeFactory(InputCount, OutputCount, _neatGenomeParams);
         }
 
-        public void Reset()
+        public void SavePopulation(string filename)
         {
+            XmlWriterSettings _xwSettings = new XmlWriterSettings();
+            _xwSettings.Indent = true;
 
+            
+            using (XmlWriter xw = XmlWriter.Create(Application.dataPath + "/" + filename, _xwSettings))
+            {
+                NeatGenomeXmlIO.WriteComplete(xw, _ea.GenomeList, false);
+            }
+        }
+
+        public List<NeatGenome> LoadPopulation(string filename)
+        {
+            using (XmlReader xr = XmlReader.Create(Application.dataPath + "/" + filename))
+            {
+                NeatGenomeFactory genomeFactory = (NeatGenomeFactory)CreateGenomeFactory();
+                return NeatGenomeXmlIO.ReadCompleteGenomeList(xr, false, genomeFactory);
+            }
         }
     }
 }

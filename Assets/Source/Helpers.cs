@@ -20,10 +20,11 @@ static class Helpers
 
 static class HelperConstants
 {
-    public const int totalAmountOfSensors = 12;
+    public const int totalAmountOfSensors = 29;
     public const int totalAmountOfOutputsOfNet = 5;
     public const float speedMultOfWa = 0.2f;
     public const int complexityThreshold = 100;
     public const int warriorSpawnOffset = 4;
+    public const float warriorRotationSpeed = 10f;
 }
 
