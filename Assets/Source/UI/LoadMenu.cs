@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 public class LoadMenu : MonoBehaviour
 {
+    [SerializeField] Canvas canvasMain;
+    [SerializeField] Canvas canvasSaveLoad;
+
     [SerializeField] Transform menuPanel;
     [SerializeField] GameObject buttonPrefab;
     List<string> savesList;
@@ -32,6 +35,9 @@ public class LoadMenu : MonoBehaviour
     }
     void LoadSave(int index)
     {
+        Debug.Log("Loading save...");
         GameManagerController.inputManagerInstance.LoadPopToSelectedPlayer(savesList[index]);
+        canvasMain.gameObject.SetActive(true);
+        canvasSaveLoad.gameObject.SetActive(false);
     }
 }

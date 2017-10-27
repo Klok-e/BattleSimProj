@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/Resources/TrainScene.unity
+- path: Assets/Resources/BattleScene.unity
   isLoaded: 1
   isActive: 1

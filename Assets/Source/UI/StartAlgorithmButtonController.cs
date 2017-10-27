@@ -18,19 +18,36 @@ public class StartAlgorithmButtonController : MonoBehaviour
     }
     void Task()
     {
-        if (state == false)//if initial state is start algorithm
+        if (state == false && !stopping)//if initial state is start algorithm
         {
             Debug.Log("Starting...");
             state = true;
             textObj.text = "Stop";
             GameManagerController.inputManagerInstance.StartRunningGenerations();
         }
-        else
+        else if (state == true && !stopping)
         {
             Debug.Log("Stopping...");
             state = false;
-            textObj.text = "Start";
             GameManagerController.inputManagerInstance.StopRunningGenerations();
+            StartCoroutine(WaitTillStopped());
+        }
+    }
+
+    bool stopping;
+    IEnumerator WaitTillStopped()
+    {
+        stopping = true;
+        while (true)
+        {
+            if (!GameManagerController.inputManagerInstance.simInst.mutualEvaluatingFlag)
+            {
+                stopping = false;
+                textObj.text = "Start";
+                break;
+            }
+            textObj.text = "Stopping...";
+            yield return null;
         }
     }
 }

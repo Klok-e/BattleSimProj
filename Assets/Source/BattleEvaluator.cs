@@ -27,7 +27,7 @@ namespace Assets.Source
 
         public IEnumerator Evaluate(IList<TGenome> genomeList)
         {
-            yield return Coroutiner.StartCoroutine(SimController.simInstance.coEvaluator.SubmitGenomesAndWaitUntilTheyAreEvaluated((List<NeatGenome>)genomeList, player));
+            yield return Coroutiner.StartCoroutine(GameManagerController.inputManagerInstance.simInst.coEvaluator.SubmitGenomesAndWaitUntilTheyAreEvaluated((List<NeatGenome>)genomeList, player));
 
             #region Log statistics and delete fitness
             float totalFitness = 0;

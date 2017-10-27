@@ -237,8 +237,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\InitializeBattleManagerButton.cs" />
     <Compile Include="Assets\Source\BattleEvaluator.cs" />
     <Compile Include="Assets\Source\BattleExperiment.cs" />
+    <Compile Include="Assets\Source\BattleManager.cs" />
     <Compile Include="Assets\Source\BlockController.cs" />
     <Compile Include="Assets\Source\CoEvaluator.cs" />
     <Compile Include="Assets\Source\GameManagerController.cs" />
@@ -405,14 +407,21 @@
     <Compile Include="Assets\Source\ProjectileController.cs" />
     <Compile Include="Assets\Source\SimController.cs" />
     <Compile Include="Assets\Source\Things\Ai.cs" />
-    <Compile Include="Assets\Source\Things\CameraController.cs" />
-    <Compile Include="Assets\Source\Things\CreateNewMapButtonController.cs" />
-    <Compile Include="Assets\Source\Things\LoadMenu.cs" />
     <Compile Include="Assets\Source\Things\SaveLoad.cs" />
-    <Compile Include="Assets\Source\Things\StartAlgorithmButtonController.cs" />
-    <Compile Include="Assets\Source\Things\SubmitAddPlayer.cs" />
-    <Compile Include="Assets\Source\Things\SubmitButtonController.cs" />
+    <Compile Include="Assets\Source\UI\CameraController.cs" />
+    <Compile Include="Assets\Source\UI\CreateNewMapButtonController.cs" />
+    <Compile Include="Assets\Source\UI\GoToMenuBtnCntrl.cs" />
+    <Compile Include="Assets\Source\UI\LoadBattleMenu.cs" />
+    <Compile Include="Assets\Source\UI\LoadMenu.cs" />
+    <Compile Include="Assets\Source\UI\RunEditorButtonContrl.cs" />
+    <Compile Include="Assets\Source\UI\StartAlgorithmButtonController.cs" />
+    <Compile Include="Assets\Source\UI\SubmitAddPlayer.cs" />
+    <Compile Include="Assets\Source\UI\SubmitButtonController.cs" />
     <Compile Include="Assets\Source\WarriorController.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\1myPopBackUp.xml" />
+    <None Include="Assets\2myPopBackUp.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />

@@ -11,8 +11,6 @@ using System.Linq;
 
 public class SimController : MonoBehaviour
 {
-    public static SimController simInstance;
-
     public GameObject tilePref;
     public GameObject warrPref;
     public GameObject projectilePref;
@@ -84,11 +82,11 @@ public class SimController : MonoBehaviour
     }
 
 
-    public void AddPlayer(int team, int amoutOfWarriorsOwns)
+    public void AddPlayer(int team, int amoutOfWarriorsOwns, bool freeze)
     {
         var pl = Instantiate(playerPref, playersParent.transform);
         var scrpt = pl.GetComponent<PlayerController>();
-        scrpt.Initialize(new Vector2(4, 4), amoutOfWarriorsOwns, team);
+        scrpt.Initialize(new Vector2(4, 4), amoutOfWarriorsOwns, team, freeze);
         warriorsTotal += scrpt.AmoutOfWarriorsOwns;
         playerAmount += 1;
     }
@@ -105,39 +103,42 @@ public class SimController : MonoBehaviour
     public IEnumerator StartPerformingGenerations()
     {
         Debug.Assert(!userWantsToRun);
-        userWantsToRun = true;
-        for (int i = 0; ; i++)
+        if (!userWantsToRun)
         {
-            if (userWantsToRun == false)
+            userWantsToRun = true;
+            for (int i = 0; ; i++)
             {
-                break;
-            }
-
-            foreach (Transform child in playersParent.transform)
-            {
-                StartCoroutine(child.GetComponent<PlayerController>().BeginDoingOneGeneration());
-            }
-
-            for (int j = 0; ; j++)
-            {
-                if (coEvaluator.EvalRequested)//evaluation requested
+                if (userWantsToRun == false)
                 {
-                    Debug.Log($"Waited for evaluation's request for {j} frames");
                     break;
+                }
+
+                foreach (Transform child in playersParent.transform)
+                {
+                    StartCoroutine(child.GetComponent<PlayerController>().BeginDoingOneGeneration());
+                }
+
+                for (int j = 0; ; j++)
+                {
+                    if (coEvaluator.EvalRequested)//evaluation requested
+                    {
+                        Debug.Log($"Waited for evaluation's request for {j} frames");
+                        break;
+                    }
+                    yield return null;
+                }
+                yield return StartCoroutine(MutualEvaluation());
+
+                if (i % 3 == 0)//save every 3 generations
+                {
+                    foreach (Transform pl in playersParent.transform)
+                    {
+                        var scrpt = pl.GetComponent<PlayerController>();
+                        scrpt.SavePopulation($"{scrpt.Team}myPopBackUp.xml");
+                    }
                 }
                 yield return null;
             }
-            yield return StartCoroutine(MutualEvaluation());
-
-            if (i % 3 == 0)//save every 3 generations
-            {
-                foreach (Transform pl in playersParent.transform)
-                {
-                    var scrpt = pl.GetComponent<PlayerController>();
-                    scrpt.SavePopulation($"{scrpt.Team}myPopBackUp.xml");
-                }
-            }
-            yield return null;
         }
     }
 
@@ -208,7 +209,7 @@ public class SimController : MonoBehaviour
 
 
     int evaluationCount = 0;
-    bool mutualEvaluatingFlag;
+    public bool mutualEvaluatingFlag;
     IEnumerator MutualEvaluation()
     {
         Debug.Assert(mutualEvaluatingFlag == false);//can't start if already started
@@ -373,22 +374,25 @@ public class SimController : MonoBehaviour
     WarriorController currentlySelectedWarr;
     private void ProcessUserInput()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (textToDisplay != null)
         {
-            var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            var coll = Physics2D.OverlapCircle(worldPoint, 0.5f, LayerMask.GetMask("Warrior"));
+            if (Input.GetMouseButtonDown(0))
+            {
+                var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                var coll = Physics2D.OverlapCircle(worldPoint, 0.5f, LayerMask.GetMask("Warrior"));
 
-            if (coll)
-            {
-                currentlySelectedWarr = coll.GetComponent<WarriorController>();
+                if (coll)
+                {
+                    currentlySelectedWarr = coll.GetComponent<WarriorController>();
+                }
+                else
+                {
+                    currentlySelectedWarr = null;
+                }
             }
-            else
-            {
-                currentlySelectedWarr = null;
-            }
+            if (currentlySelectedWarr != null)
+                textToDisplay.text = currentlySelectedWarr.toShowOnGui;
         }
-        if (currentlySelectedWarr != null)
-            textToDisplay.text = currentlySelectedWarr.toShowOnGui;
     }
 
 

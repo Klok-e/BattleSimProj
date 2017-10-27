@@ -37,7 +37,7 @@ public class PlayerController : MonoBehaviour
     }
 
     bool initialized;
-    public void Initialize(Vector2 pos, int amoutOfWarriorsOwns, int team)
+    public void Initialize(Vector2 pos, int amoutOfWarriorsOwns, int team,bool freeze)
     {
         Debug.Assert(amoutOfWarriorsOwns > 5);
         transform.position = pos;
@@ -53,6 +53,7 @@ public class PlayerController : MonoBehaviour
         initialized = true;
 
         lineRenderer = GetComponent<LineRenderer>();
+        isEvolutionFreezed = freeze;
     }
 
     private float CalculateSpeed(List<Vector3> list)

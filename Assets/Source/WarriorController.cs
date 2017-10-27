@@ -346,7 +346,7 @@ public static class Actions
             Debug.DrawRay(warr.transform.position, direction);
             if (isFinished)
             {
-                SimController.simInstance.CreateNewProjectile((Vector2)warr.transform.position + direction, direction, damage, warr);
+                GameManagerController.inputManagerInstance.simInst.CreateNewProjectile((Vector2)warr.transform.position + direction, direction, damage, warr);
             }
         }
     }

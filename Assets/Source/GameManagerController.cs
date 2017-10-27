@@ -24,9 +24,8 @@ public class GameManagerController : MonoBehaviour
         lineRenderer = GetComponent<LineRenderer>();
         inputManagerInstance = this;
         isEditorMode = true;
-        SimController.simInstance = simInst;
 
-        SimController.simInstance.Initialize();
+        simInst.Initialize();
     }
 
     public void LoadPopToSelectedPlayer(string name)
@@ -88,26 +87,39 @@ public class GameManagerController : MonoBehaviour
     }
 
     int team = 1;
-    public void AddPlayer(int amountOfW)
+    public void AddPlayer(int amountOfW,bool freeze)
     {
-        SimController.simInstance.AddPlayer(team++, amountOfW);
+        simInst.AddPlayer(team++, amountOfW,freeze);
     }
     public void ResetPlayers()
     {
         team = 1;
-        SimController.simInstance.ResetPlayers();
+        simInst.ResetPlayers();
     }
 
     public void StartRunningGenerations()
     {
-        SimController.simInstance.InitPlayers();
+        simInst.InitPlayers();
         isEditorMode = false;
-        StartCoroutine(SimController.simInstance.StartPerformingGenerations());
+        StartCoroutine(simInst.StartPerformingGenerations());
     }
     public void StopRunningGenerations()
     {
-        isEditorMode = true;
-        SimController.simInstance.userWantsToRun = false;
+        StartCoroutine(SetEditorModeWhenEvalsFinished());
+        simInst.userWantsToRun = false;
+    }
+
+    private IEnumerator SetEditorModeWhenEvalsFinished()
+    {
+        while (true)
+        {
+            if (!simInst.mutualEvaluatingFlag)
+            {
+                isEditorMode = true;
+                break;
+            }
+            yield return null;
+        }
     }
 
     PlayerController currentlySelectedPlayer;

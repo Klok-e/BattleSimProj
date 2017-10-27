@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class SubmitAddPlayer : MonoBehaviour
 {
+    public Toggle toggleFreezeTraining;
     // Use this for initialization
     void Start()
     {
@@ -14,11 +15,8 @@ public class SubmitAddPlayer : MonoBehaviour
 
     void TaskOnClick()
     {
-        //var txt = inpField.text;
+        bool frz = toggleFreezeTraining.isOn;
 
-        //int num;
-        //bool succeded = int.TryParse(txt, out num);
-
-        GameManagerController.inputManagerInstance.AddPlayer(HelperConstants.warriorsPerPlayer);
+        GameManagerController.inputManagerInstance.AddPlayer(HelperConstants.warriorsPerPlayer,frz);
     }
 }

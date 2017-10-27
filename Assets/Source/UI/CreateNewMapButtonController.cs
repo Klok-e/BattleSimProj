@@ -25,7 +25,7 @@ public class CreateNewMapButtonController : MonoBehaviour
             int.TryParse(inputWidth.text, out width);
             int.TryParse(inputHeight.text, out height);
 
-            SimController.simInstance.CreateNewMap(width, height);
+            GameManagerController.inputManagerInstance.simInst.CreateNewMap(width, height);
         }
         catch (Exception e)
         {
