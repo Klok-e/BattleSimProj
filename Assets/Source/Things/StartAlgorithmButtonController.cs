@@ -20,17 +20,17 @@ public class StartAlgorithmButtonController : MonoBehaviour
     {
         if (state == false)//if initial state is start algorithm
         {
-            Debug.Log("Starting evolution...");
+            Debug.Log("Starting...");
             state = true;
-            textObj.text = "Stop evolution";
-            StartCoroutine(SimController.simInstance.StartPerformingGenerations());
+            textObj.text = "Stop";
+            GameManagerController.inputManagerInstance.StartRunningGenerations();
         }
         else
         {
-            Debug.Log("Stopping evolution...");
+            Debug.Log("Stopping...");
             state = false;
-            textObj.text = "Start evolution";
-            SimController.simInstance.userWantsToStart = false;
+            textObj.text = "Start";
+            GameManagerController.inputManagerInstance.StopRunningGenerations();
         }
     }
 }

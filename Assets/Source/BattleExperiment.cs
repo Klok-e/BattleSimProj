@@ -36,15 +36,15 @@ namespace Assets.Source
             _activationScheme = NetworkActivationScheme.CreateCyclicFixedTimestepsScheme(2);
 
             _eaParams = new NeatEvolutionAlgorithmParameters();
-            _eaParams.SpecieCount = 5;
+            _eaParams.SpecieCount = 4;
 
             _neatGenomeParams = new NeatGenomeParameters();
             //_neatGenomeParams.ActivationFn = new SharpNeat.Network.Linear();
-            _neatGenomeParams.AddConnectionMutationProbability = 0.5;
+            _neatGenomeParams.AddConnectionMutationProbability = 0.7;
             _neatGenomeParams.AddNodeMutationProbability = 0.3;
-            _neatGenomeParams.DeleteConnectionMutationProbability = 0.4;
+            _neatGenomeParams.DeleteConnectionMutationProbability = 0.5;
             _neatGenomeParams.ConnectionWeightMutationProbability = 0.94;
-            _neatGenomeParams.InitialInterconnectionsProportion = 0.2;
+            _neatGenomeParams.InitialInterconnectionsProportion = 0.4;
 
             _neatGenomeParams.FeedforwardOnly = _activationScheme.AcyclicNetwork;
         }
@@ -54,7 +54,7 @@ namespace Assets.Source
             return new NeatGenomeDecoder(_activationScheme);
         }
 
-        public NeatEvolutionAlgorithm<NeatGenome> CreateEvolutionAlgorithm(BattleEvaluator<NeatGenome> evaluator, IGenomeDecoder<NeatGenome, IBlackBox> genomeDecoder, int populationSize)
+        public NeatEvolutionAlgorithm<NeatGenome> CreateEvolutionAlgorithm(BattleEvaluator<NeatGenome> evaluator, int populationSize)
         {
             var genomeFactory = new NeatGenomeFactory(InputCount, OutputCount, _neatGenomeParams);
             var genomeList = genomeFactory.CreateGenomeList(populationSize, 0);

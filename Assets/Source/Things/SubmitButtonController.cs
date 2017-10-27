@@ -6,7 +6,6 @@ using UnityEngine.UI;
 
 public class SubmitButtonController : MonoBehaviour
 {
-    public bool isSavingTask;
     public InputField inputField;
 
     // Use this for initialization
@@ -18,33 +17,15 @@ public class SubmitButtonController : MonoBehaviour
 
     void TaskOnClick()
     {
-        if (isSavingTask)
+        var txt = inputField.text;
+        Debug.Log("Saved in " + txt);
+        try
         {
-            var txt = inputField.text;
-            //inputField.text = "";
-            Debug.Log("Saved in " + txt);
-            try
-            {
-                SimController.simInstance.SavePopulation(txt);
-            }
-            catch (Exception e)
-            {
-                Debug.Log("Couldn't save: " + e);
-            }
+            GameManagerController.inputManagerInstance.SaveCurrentPlayer(txt);
         }
-        else
+        catch (Exception e)
         {
-            var txt = inputField.text;
-            //inputField.text = "";
-            Debug.Log("Loaded " + txt);
-            try
-            {
-                SimController.simInstance.LoadPopulation(txt);
-            }
-            catch (Exception e)
-            {
-                Debug.Log("Couldn't load: " + e);
-            }
+            Debug.Log("Couldn't save: " + e);
         }
     }
 }

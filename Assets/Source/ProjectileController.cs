@@ -4,15 +4,26 @@ using UnityEngine;
 
 public class ProjectileController : MonoBehaviour
 {
-    public Vector2 direction;
-    public WarriorController whoShoots;
-    public float damage;
+    public Vector2 Direction { get { return direction; } }
+    private Vector2 direction;
+
+    private WarriorController whoShoots;
+    private float damage;
+
+    public void Initialize(Vector2 start, Vector2 direction, float damage, WarriorController shooter)
+    {
+        this.transform.position = start;
+        this.direction = direction;
+        this.damage = damage;
+        this.whoShoots = shooter;
+    }
 
     public void Tick()
     {
-        transform.Translate(direction * HelperConstants.projectileSpeed);
-        direction *= 0.9f;
-        if (direction.magnitude < 0.1)
+        var speed = Direction * HelperConstants.projectileSpeed;
+        transform.Translate(speed);
+        direction *= 0.97f;
+        if (speed.magnitude < 0.1)
         {
             Die();
         }
@@ -23,6 +34,7 @@ public class ProjectileController : MonoBehaviour
         if (collision.gameObject.tag.Equals("Warrior") && collision.gameObject.activeSelf)
         {
             var otherWarr = collision.gameObject.GetComponent<WarriorController>();
+            Debug.Assert(otherWarr != null);
             if (otherWarr != whoShoots)
             {
                 bool wasKilled = otherWarr.LoseBlood(damage);
@@ -49,6 +61,6 @@ public class ProjectileController : MonoBehaviour
 
     private void Die()
     {
-        gameObject.SetActive(false);
+        Destroy(gameObject);
     }
 }

@@ -7,6 +7,7 @@ using SharpNeat.Core;
 using SharpNeat.Phenomes;
 using SharpNeat.Genomes.Neat;
 using UnityEngine.UI;
+using System.Linq;
 
 public class SimController : MonoBehaviour
 {
@@ -16,17 +17,25 @@ public class SimController : MonoBehaviour
     public GameObject warrPref;
     public GameObject projectilePref;
     public GameObject obstaclePref;
+    public GameObject playerPref;
 
-    List<BlockController> blocks;
-    List<WarriorController> warriors;
-    List<ProjectileController> projectiles;
+    public GameObject blocksParent;
+    public GameObject warriorsParent;
+    public GameObject projectilesParent;
+    public GameObject playersParent;
+
+    WarriorController[] warriors;//cached for performance
 
     System.Random random;
 
-    int warriorsTotal = 30;
+    int warriorsTotal;
 
     public int height;
     public int width;
+
+    private int playerAmount;
+
+    public Assets.Source.CoEvaluator coEvaluator;
 
     public static StructureOfWarrior defaultWarStrct = new StructureOfWarrior()
     {
@@ -38,25 +47,12 @@ public class SimController : MonoBehaviour
             }
     };
 
-    Assets.Source.BattleExperiment experiment;
+    //Assets.Source.BattleExperiment experiment;
     // Use this for initialization
     void Start()
     {
-        Debug.Log("Main thread is " + System.Threading.Thread.CurrentThread.ManagedThreadId);
-
+        Debug.Log("Main thread is " + Thread.CurrentThread.ManagedThreadId);
         Debug.Assert(warriorsTotal % 2 == 0);
-
-        simInstance = this;
-        blocks = new List<BlockController>();
-        warriors = new List<WarriorController>();
-        projectiles = new List<ProjectileController>();
-
-        CreateNewMap(width, height);
-        experiment = CreateExperiment();
-
-        Debug.Log(experiment._ea.RunState);
-
-        SpawnWarriors(warriorsTotal);
     }
 
     void Update()
@@ -64,42 +60,85 @@ public class SimController : MonoBehaviour
         ProcessUserInput();
     }
 
-    public bool userWantsToStart;
-    public IEnumerator StartPerformingGenerations()
+    public void Initialize()
     {
-        if (!userWantsToStart)
+        Debug.Log("Initializing sim");
+        blocksParent = new GameObject("blocksParent");
+        warriorsParent = new GameObject("warriorsParent");
+        projectilesParent = new GameObject("projectilesParent");
+        playersParent = new GameObject("playersParent");
+
+        CreateNewMap(width, height);
+    }
+
+    public void ResetPlayers()
+    {
+        foreach (Transform item in playersParent.transform)
         {
-            userWantsToStart = true;
-            for (int i = 0; ; i++)
-            {
-                Time.timeScale = timeScaleEvaluation;
-                if (userWantsToStart == false)
-                {
-                    break;
-                }
+            var scrpt = item.GetComponent<PlayerController>();
+            warriorsTotal -= scrpt.AmoutOfWarriorsOwns;
+            playerAmount -= 1;
 
-                yield return StartCoroutine(experiment._ea.DoOneGeneration());
-                if (i % 3 == 0)
-                {
-                    //save
-                    experiment.SavePopulation("myPopBackUp.xml");
-                }
-
-                Time.timeScale = 1;
-            }
+            Destroy(item.gameObject);
         }
     }
 
-    public void LoadPopulation(string filename)
-    {
-        var battleEvaluator = new Assets.Source.BattleEvaluator<NeatGenome>();
 
-        experiment.CreateEvolutionAlgorithm(battleEvaluator, experiment.LoadPopulation(filename));
+    public void AddPlayer(int team, int amoutOfWarriorsOwns)
+    {
+        var pl = Instantiate(playerPref, playersParent.transform);
+        var scrpt = pl.GetComponent<PlayerController>();
+        scrpt.Initialize(new Vector2(4, 4), amoutOfWarriorsOwns, team);
+        warriorsTotal += scrpt.AmoutOfWarriorsOwns;
+        playerAmount += 1;
     }
 
-    public void SavePopulation(string filename)
+    public void InitPlayers()
     {
-        experiment.SavePopulation(filename);
+        Debug.Log("Initializing players");
+
+        coEvaluator = new Assets.Source.CoEvaluator(playerAmount);
+    }
+
+
+    public bool userWantsToRun;
+    public IEnumerator StartPerformingGenerations()
+    {
+        Debug.Assert(!userWantsToRun);
+        userWantsToRun = true;
+        for (int i = 0; ; i++)
+        {
+            if (userWantsToRun == false)
+            {
+                break;
+            }
+
+            foreach (Transform child in playersParent.transform)
+            {
+                StartCoroutine(child.GetComponent<PlayerController>().BeginDoingOneGeneration());
+            }
+
+            for (int j = 0; ; j++)
+            {
+                if (coEvaluator.EvalRequested)//evaluation requested
+                {
+                    Debug.Log($"Waited for evaluation's request for {j} frames");
+                    break;
+                }
+                yield return null;
+            }
+            yield return StartCoroutine(MutualEvaluation());
+
+            if (i % 3 == 0)//save every 3 generations
+            {
+                foreach (Transform pl in playersParent.transform)
+                {
+                    var scrpt = pl.GetComponent<PlayerController>();
+                    scrpt.SavePopulation($"{scrpt.Team}myPopBackUp.xml");
+                }
+            }
+            yield return null;
+        }
     }
 
     float timeScaleEvaluation = 1;
@@ -110,11 +149,10 @@ public class SimController : MonoBehaviour
 
     private void DeleteMap()
     {
-        foreach (var item in blocks)
+        foreach (Transform child in blocksParent.transform)
         {
-            Destroy(item.gameObject);
+            Destroy(child.gameObject);
         }
-        blocks.Clear();
     }
 
     public void CreateNewMap(int width, int height)
@@ -134,119 +172,148 @@ public class SimController : MonoBehaviour
         Debug.Log("Map created");
     }
 
-    IGenomeDecoder<NeatGenome, IBlackBox> decoder;
-    private Assets.Source.BattleExperiment CreateExperiment()
-    {
-        var experiment = new Assets.Source.BattleExperiment();
-
-        var battleEvaluator = new Assets.Source.BattleEvaluator<NeatGenome>();
-
-        decoder = experiment.CreateDecoder();
-        experiment._ea = experiment.CreateEvolutionAlgorithm(battleEvaluator, decoder, warriorsTotal);
-        Debug.Log("Experiment created");
-        return experiment;
-    }
-
-    public IEnumerator StartEvaluatingGenomes(List<NeatGenome> list)
-    {
-        for (int i = 0; i < 3; i++)//evaluations for stable train
-        {
-            ResetEvaluation(decoder, list);
-            Debug.Log("Warriors reset");
-            yield return StartCoroutine(Evaluate());
-        }
-
-        #region Log statistics and delete fitness
-        float totalFitness = 0;
-        float mxFitness = warriors[0].GetFitness();
-        float totalComplexity = 0;
-        float mxComplexity = (float)warriors[0].ai.genome.Complexity;
-        foreach (var warr in warriors)
-        {
-            totalFitness += warr.GetFitness();
-            mxFitness = Math.Max(mxFitness, warr.GetFitness());
-            totalComplexity += (float)warr.ai.genome.Complexity;
-            mxComplexity = Math.Max(mxComplexity, (float)warr.ai.genome.Complexity);
-
-            warr.fitness = 0;//delete fitness
-        }
-        Debug.Log(String.Format("Max fitness is {0}; Mean fitnes is {1}; Max complexity is {2}; Mean complexity is {3}",
-            mxFitness,
-            totalFitness / warriorsTotal,
-            mxComplexity,
-            totalComplexity / warriorsTotal));
-        #endregion
-    }
-
     #region Methods for evaluating
-    private void SpawnWarriors(int warrTot)
+    //bool mutualEvalCoroutineStarted;
+
+    /*
+    public IEnumerator StartEvaluationOfPlayersGenomes(List<NeatGenome> genomesList, PlayerController playerSubmitter)
     {
-        for (int i = 0; i < warrTot; i++)
+        mutualEvalCoroutineStarted = false;
+        
+
+        for (int i = 0; ; i++)
         {
-            WarriorController w;
-            if (i % 2 == 0)
+            if (playerNetsDict.Count == playerAmount)//if all players submitted
             {
-                w = CreateNewWarrior(new Vector2(1 + HelperConstants.warriorSpawnOffset, 1 + HelperConstants.warriorSpawnOffset),
-                    defaultWarStrct, 1, new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random));
+                if (mutualEvalCoroutineStarted == false)//only 1 player starts coroutine
+                {
+                    Debug.Log("All players have submitted their genome lists");
+                    mutualEvalCoroutineStarted = true;
+                    StartCoroutine(MutualEvaluation());
+                }
+                break;//all players break
             }
-            else
-            {
-                w = CreateNewWarrior(new Vector2(width - 2 - HelperConstants.warriorSpawnOffset, height - 2 - HelperConstants.warriorSpawnOffset),
-                    defaultWarStrct, 2, new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random));
-            }
+
+            yield return null;
         }
+        for (int i = 0; ; i++)//wait for MutualEvaluation coroutine to finish
+        {
+            if (!mutualEvaluatingFlag && i > 0)//wait several frames before break
+            {
+                break;
+            }
+            yield return null;
+        }
+    }*/
+
+
+    int evaluationCount = 0;
+    bool mutualEvaluatingFlag;
+    IEnumerator MutualEvaluation()
+    {
+        Debug.Assert(mutualEvaluatingFlag == false);//can't start if already started
+        mutualEvaluatingFlag = true;
+
+        foreach (var playerNets in coEvaluator.playerNetsDict)
+        {
+            SpawnWarriorsAndAssignBoxes(
+                playerNets.Key.transform.position,
+                playerNets.Value.Keys.ToList(),
+                playerNets.Key,
+                playerNets.Key.AmoutOfWarriorsOwns,
+                playerNets.Key.Team);
+            Debug.Log($"{playerNets.Key.Team} team");
+        }
+
+        for (int i = 0; i < HelperConstants.evaluationsPerGeneration; i++)//HelperConstants.evaluationsPerGeneration evaluations
+        {
+            Debug.Log($"Setting timescale to {timeScaleEvaluation}");
+            Time.timeScale = timeScaleEvaluation;
+            ResetWarriorsToTheirDefaults();
+            yield return StartCoroutine(Evaluate());
+            Time.timeScale = 1;
+        }
+        Debug.Log("Mutual evaluation finished");
+        AssignEvaluatedFitnessesToGenomes();
+        mutualEvaluatingFlag = false;
+        evaluationCount++;
+        coEvaluator.evalFinished = true;
     }
 
-    private void ResetEvaluation(IGenomeDecoder<NeatGenome, IBlackBox> deco, List<NeatGenome> genomes)
+    #region Small helper functions
+    private void AssignEvaluatedFitnessesToGenomes()
     {
-        for (int i = 0; i < warriorsTotal; i++)
+        Dictionary<IBlackBox, NeatGenome> merged = new Dictionary<IBlackBox, NeatGenome>();
+        foreach (var keyVal in coEvaluator.playerNetsDict)
         {
-            var w = warriors[i];
-            IBlackBox box = null;
-            box = deco.Decode(genomes[i]);
-            w.ai.SetNetworkAndGenome(box, genomes[i]);
-            w.Revive();
-            if (w.team == 1)
-            {
-                w.transform.position = new Vector2(1 + HelperConstants.warriorSpawnOffset, 1 + HelperConstants.warriorSpawnOffset);
-            }
-            else
-            {
-                w.transform.position = new Vector2(width - 2 - HelperConstants.warriorSpawnOffset, height - 2 - HelperConstants.warriorSpawnOffset);
-            }
+            Helpers.CopyElements(keyVal.Value, merged);
         }
-        foreach (var item in projectiles)
+        foreach (var warrior in warriors)
+        {
+            merged[warrior.ai.network].EvaluationInfo.SetFitness(Math.Max(warrior.Fitness, 0));
+        }
+        DestroyWarriors();
+    }
+
+    private void DestroyWarriors()
+    {
+        foreach (Transform item in warriorsParent.transform)
         {
             Destroy(item.gameObject);
         }
-        projectiles.Clear();
     }
 
-    int time;
-    int fps = 100;
-    int ticksForEvalMax = 1000;
+    private void ResetWarriorsToTheirDefaults()
+    {
+        foreach (var warrior in warriors)
+        {
+            warrior.Revive();
+        }
+    }
+
+    private void SpawnWarriorsAndAssignBoxes(Vector2 pos, IList<IBlackBox> boxes, PlayerController pla, int amount, int team)
+    {
+        Debug.Assert(boxes.Count == amount);
+        Debug.Assert(team >= 1);
+        for (int i = 0; i < amount; i++)
+        {
+            var w = CreateNewWarrior(pos, defaultWarStrct, team, new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random, boxes[i]), pla);
+        }
+        warriors = warriorsParent.GetComponentsInChildren<WarriorController>();
+    }
+    #endregion
+
+    bool evaluatingFlag;
+    int ticksForEvalMax = HelperConstants.ticksPerEvaluation;
     int ticksPassedFromStartEval = 0;
     private IEnumerator Evaluate()
     {
+        Debug.Assert(!evaluatingFlag);//can't start evaluating if already evaluating
+        evaluatingFlag = true;
+
+        foreach (var player in playersParent.GetComponentsInChildren<PlayerController>())
+        {
+            StartCoroutine(player.TickTrain());
+        }
+
         while (ticksPassedFromStartEval < ticksForEvalMax)
         {
             Tick();
             ticksPassedFromStartEval++;
             if (ticksPassedFromStartEval % 200 == 0) Debug.Log(ticksPassedFromStartEval + " ticks passed");
-            time = Environment.TickCount;
-
             yield return new WaitForFixedUpdate();
         }
+        Debug.Log("Evaluation finished");
         ticksPassedFromStartEval = 0;
-
-
+        evaluatingFlag = false;
     }
 
     public void Tick()
     {
-        foreach (var body in projectiles)
+        var projectiles = projectilesParent.GetComponentsInChildren<ProjectileController>();
+        foreach (var proj in projectiles)
         {
-            body.Tick();
+            proj.Tick();
         }
 
         foreach (var warrior in warriors)
@@ -265,62 +332,38 @@ public class SimController : MonoBehaviour
     #region Create game object methods
     private BlockController CreateNewBlock(Vector2 pos, bool empty)
     {
+        GameObject newObj;
         if (empty)
         {
-            var newObj = Instantiate(tilePref, transform);
-
-            var scrpt = newObj.GetComponent<BlockController>();
-            scrpt.transform.position = pos;
-
-            blocks.Add(scrpt);
-            return scrpt;
+            newObj = Instantiate(tilePref, blocksParent.transform);
         }
         else
         {
-            var newObj = Instantiate(obstaclePref, transform);
-
-            var scrpt = newObj.GetComponent<BlockController>();
-            scrpt.transform.position = pos;
-
-            blocks.Add(scrpt);
-            return scrpt;
+            newObj = Instantiate(obstaclePref, blocksParent.transform);
         }
-    }
-
-    private WarriorController CreateNewWarrior(Vector2 pos, StructureOfWarrior str, int team, NeuralAI ai)
-    {
-        var newObj = Instantiate(warrPref, transform);
-
-        var scrpt = newObj.GetComponent<WarriorController>();
+        var scrpt = newObj.GetComponent<BlockController>();
         scrpt.transform.position = pos;
 
-        scrpt.ai = ai;
-        scrpt.team = team;
-        scrpt.bloodRemaining = str.blood;
-        scrpt.limbs = new List<Limb>();
-        foreach (var l in str.str)
-        {
-            scrpt.limbs.Add(l.Copy(scrpt));
-        }
-        scrpt.speed = HelperConstants.speedMultOfWa;
-        scrpt.rotationSpeed = HelperConstants.warriorRotationSpeed;
-        scrpt.isShooter = true;
+        return scrpt;
+    }
 
-        warriors.Add(scrpt);
+    private WarriorController CreateNewWarrior(Vector2 pos, StructureOfWarrior str, int team, NeuralAI ai, PlayerController pla)
+    {
+        var newObj = Instantiate(warrPref, warriorsParent.transform);
+
+        var scrpt = newObj.GetComponent<WarriorController>();
+        scrpt.Initialize(pos, str, team, ai, pla);
+
         return scrpt;
     }
 
     public ProjectileController CreateNewProjectile(Vector2 start, Vector2 direction, float damage, WarriorController shooter)
     {
-        var newObj = Instantiate(projectilePref, transform);
+        var newObj = Instantiate(projectilePref, projectilesParent.transform);
 
         var scrpt = newObj.GetComponent<ProjectileController>();
-        scrpt.transform.position = start;
-        scrpt.direction = direction;
-        scrpt.damage = damage;
-        scrpt.whoShoots = shooter;
+        scrpt.Initialize(start, direction, damage, shooter);
 
-        projectiles.Add(scrpt);
         return scrpt;
     }
     #endregion
@@ -338,12 +381,9 @@ public class SimController : MonoBehaviour
             if (coll)
             {
                 currentlySelectedWarr = coll.GetComponent<WarriorController>();
-                currentlySelectedWarr.userControlled = true;
             }
             else
             {
-                if (currentlySelectedWarr != null)
-                    currentlySelectedWarr.userControlled = false;
                 currentlySelectedWarr = null;
             }
         }

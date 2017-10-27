@@ -15,10 +15,12 @@ using System.Collections;
 /// </summary>
 public class Coroutiner
 {
-    private static GameObject routeneHandlerGo = new GameObject("Coroutiner");
-    private static CoroutinerInstance routeneHandler = routeneHandlerGo.AddComponent(typeof(CoroutinerInstance)) as CoroutinerInstance;
+
     public static Coroutine StartCoroutine(IEnumerator iterationResult)
     {
+        //Create GameObject with MonoBehaviour to handle task.
+        GameObject routeneHandlerGo = new GameObject("Coroutiner");
+        CoroutinerInstance routeneHandler = routeneHandlerGo.AddComponent(typeof(CoroutinerInstance)) as CoroutinerInstance;
         return routeneHandler.ProcessWork(iterationResult);
     }
 
@@ -29,7 +31,13 @@ public class CoroutinerInstance : MonoBehaviour
 
     public Coroutine ProcessWork(IEnumerator iterationResult)
     {
-        return StartCoroutine(iterationResult);
+        return StartCoroutine(DestroyWhenComplete(iterationResult));
+    }
+
+    public IEnumerator DestroyWhenComplete(IEnumerator iterationResult)
+    {
+        yield return StartCoroutine(iterationResult);
+        Destroy(gameObject);
     }
 
 }

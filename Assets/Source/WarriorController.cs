@@ -8,32 +8,54 @@ public class WarriorController : MonoBehaviour
     public string toShowOnGui;
     SpriteRenderer sprRend;
 
-    private void Start()
-    {
-        currentAction = new Actions.IdleAction();
-        sprRend = GetComponent<SpriteRenderer>();
-        sprRend.color = team == 1 ? Color.blue : Color.red;
-    }
-
-    public void Revive()
-    {
-        gameObject.SetActive(true);
-        transform.GetChild(0).gameObject.SetActive(true);
-    }
-
-    #region Warrior
-
-
     public const float distanceOfAttack = 1f;
     public float speed;
     public float rotationSpeed;
     public NeuralAI ai;
     public int team;
 
-    public List<Limb> limbs;
-
     public Actions.Action currentAction;
 
+    private float bloodRemaining;
+    private float bloodMax;
+
+    public PlayerController PlayerOwner { get { return playerOwner; } }
+    private PlayerController playerOwner;
+
+    private void Start()
+    {
+        currentAction = new Actions.IdleAction();
+        sprRend = GetComponent<SpriteRenderer>();
+        //sprRend.color = team == 1 ? Color.blue : Color.red;
+    }
+
+    public void Initialize(Vector2 pos, StructureOfWarrior str, int team, NeuralAI ai, PlayerController pla)
+    {
+        transform.position = pos;
+
+        playerOwner = pla;
+
+        this.ai = ai;
+        this.team = team;
+        this.bloodRemaining = str.blood;
+        bloodMax = str.blood;
+        speed = HelperConstants.speedMultOfWa;
+        rotationSpeed = HelperConstants.warriorRotationSpeed;
+        isShooter = true;
+
+        //TODO: add limbs
+    }
+
+    public void Revive()
+    {
+        gameObject.SetActive(true);
+        transform.GetChild(0).gameObject.SetActive(true);
+        transform.position = playerOwner.pointsToVisitDuringTraining[0];
+        bloodRemaining = bloodMax;
+        ai.network.ResetState();
+    }
+
+    #region Warrior
     public void Tick(Actions.Action action)
     {
         Tick();
@@ -45,34 +67,18 @@ public class WarriorController : MonoBehaviour
         currentAction.Tick();
     }
 
-    public bool userControlled;
     public Actions.Action ChooseAction()
     {
         toShowOnGui = "";
         var data = GatherDataOfEnvironment();
         var pred = ai.Predict(data);
         Actions.Action action;
-        if (userControlled)
-        {
-            var playerPred = new double[HelperConstants.totalAmountOfOutputsOfNet];
 
-            float move_x = Input.GetAxis("Horizontal");
-            float move_y = Input.GetAxis("Vertical");
-
-            playerPred[1] = Math.Min(Input.GetAxis("Horizontal") + 1, 1);//angle
-            playerPred[0] = Math.Min(Input.GetAxis("Vertical") + 1, 1);//speed
-            playerPred[2] = Math.Min(Input.GetAxis("Jump"), 1);
-
-            action = PredictionToAction(playerPred);
-        }
-        else
-        {
-            action = PredictionToAction(pred);
-        }
+        action = PredictionToAction(pred);
         return action;
     }
 
-    public readonly int sensorRange = 16;
+    public readonly int sensorRange = 6;
     public readonly int raycastSensors = 7;
     public readonly int diffBetwSensorsInDeg = 15;
     private double[] GatherDataOfEnvironment()
@@ -100,7 +106,7 @@ public class WarriorController : MonoBehaviour
         var eyeData = new double[raycastSensors * 4];
 
         var pos = transform.position;
-        var mask = LayerMask.GetMask("Obstacle", "Warrior","Projectile");
+        var mask = LayerMask.GetMask("Obstacle", "Warrior", "Projectile");
         var j = 0;
         foreach (var angle in angles)
         {
@@ -131,7 +137,7 @@ public class WarriorController : MonoBehaviour
                     var projectile = hit.collider.GetComponent<ProjectileController>();
                     eyeData[j + 1] = 0;
                     eyeData[j + 2] = -1;//-1 - projectile
-                    eyeData[j + 3] = Vector2.Angle(transform.TransformPoint(projectile.direction), transform.up) * Mathf.Deg2Rad;
+                    eyeData[j + 3] = Vector2.Angle(transform.TransformPoint(projectile.Direction), transform.up) * Mathf.Deg2Rad;
                 }
             }
             j += 4; //every eye must see distance and what is it
@@ -140,13 +146,49 @@ public class WarriorController : MonoBehaviour
 
         dataData.AddRange(eyeData);
         dataData.Add(1 - (1 / bloodRemaining));
+        var deltaVector = (playerOwner.transform.position - transform.position).normalized;
+        dataData.Add(NormalizeAngle(deltaVector));//magic
 
         #region string to show
         var temp = dataData.ToArray();
         toShowOnGui += Helpers.ArrayToString(temp) + "\n";
         #endregion
         Debug.Assert(HelperConstants.totalAmountOfSensors == temp.Length);
-        return temp;//29 sensors total
+        return temp;//30 sensors total
+    }
+
+    private float NormalizeAngle(Vector2 deltaVector)
+    {
+        float angle = transform.eulerAngles.z % 360f;
+        if (angle < 0f)
+            angle += 360f;
+
+        float rad = Mathf.Atan2(deltaVector.y, deltaVector.x);
+        rad *= Mathf.Rad2Deg;
+
+        rad = rad % 360;
+        if (rad < 0)
+        {
+            rad = 360 + rad;
+        }
+
+        rad = 90f - rad;
+        if (rad < 0f)
+        {
+            rad += 360f;
+        }
+        rad = 360 - rad;
+        rad -= angle;
+        if (rad < 0)
+            rad = 360 + rad;
+        if (rad >= 180f)
+        {
+            rad = 360 - rad;
+            rad *= -1f;
+        }
+        rad *= Mathf.Deg2Rad;
+
+        return rad / (Mathf.PI);
     }
 
     public bool isShooter;
@@ -189,20 +231,19 @@ public class WarriorController : MonoBehaviour
     }
 
     #region Statistics
-    public float fitness;
+    public float Fitness { get { return fitness; } }
+    private float fitness;
     public void AddFitnessToThis(float toAddFit)
     {
         fitness += toAddFit;
-
-        ai.genome.EvaluationInfo.SetFitness(Math.Max(fitness, 0));
     }
-    public float GetFitness()
+    public void ResetFitness()
     {
-        return fitness;
+        fitness = 0;
     }
     #endregion
 
-    public float bloodRemaining;
+
     public bool LoseBlood(float toLose)
     {
         transform.GetChild(0).GetComponent<ParticleSystem>().Play();
@@ -343,7 +384,6 @@ public static class Actions
             this.rotateBy = rotateBy;
             moves = w;
 
-            var temp = speed;
             ticksToFinish = 1;
         }
 
@@ -351,8 +391,12 @@ public static class Actions
         {
             if (isFinished)
             {
+                var posBeforeMove = moves.transform.position;
                 moves.transform.Rotate(new Vector3(0, 0, rotateBy));
                 moves.transform.Translate(Vector3.up * speed);
+                moves.AddFitnessToThis(
+                    Mathf.Max(Vector3.Distance(posBeforeMove, moves.PlayerOwner.transform.position) -
+                    Vector3.Distance(moves.transform.position, moves.PlayerOwner.transform.position), 0) * 0.007f);//if approached to owner then encourage
             }
         }
     }

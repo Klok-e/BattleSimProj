@@ -5,16 +5,18 @@ using System.Collections;
 public class CameraController : MonoBehaviour
 {
     public float move_speed;
-    public float zoomSpeed;
 
     public static CameraController cameraInstance;
 
     //private GameController gameControllerInstance;
     private Vector3 offset;
 
+    Camera cameraAttached;
+
     void Start()
     {
         cameraInstance = this;
+        cameraAttached = GetComponent<Camera>();
     }
 
     private void LateUpdate()
@@ -23,9 +25,10 @@ public class CameraController : MonoBehaviour
         float move_y = Input.GetAxisRaw("Vertical");
         float cameraZoom = Input.GetAxisRaw("Mouse ScrollWheel");
 
-        GetComponent<Camera>().orthographicSize += -cameraZoom * zoomSpeed;
+        cameraAttached.orthographicSize *= -cameraZoom + 1;
 
-        transform.position = transform.position + new Vector3(move_x * move_speed, move_y * move_speed);
+        var move = new Vector3(move_x, move_y, 0).normalized;
+        transform.Translate(move * cameraAttached.orthographicSize / move_speed);
     }
 }
 

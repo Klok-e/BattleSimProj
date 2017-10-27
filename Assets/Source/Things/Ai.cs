@@ -15,20 +15,14 @@ public class NeuralAI
     public int inputsNum;
     public int outputsNum;
 
-    protected IBlackBox network;
-    public NeatGenome genome;
+    public IBlackBox network { get; }
 
-    public NeuralAI(int inps, int outps, Random rand)
+    public NeuralAI(int inps, int outps, Random rand,IBlackBox net)
     {
         random = rand;
         inputsNum = inps;
         outputsNum = outps;
-    }
-
-    public void SetNetworkAndGenome(IBlackBox net, NeatGenome gen)
-    {
         network = net;
-        genome = gen;
     }
 
     public double[] Predict(double[] inp)

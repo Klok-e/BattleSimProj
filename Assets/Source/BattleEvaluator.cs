@@ -15,11 +15,10 @@ namespace Assets.Source
     class BattleEvaluator<TGenome> : IGenomeListEvaluator<TGenome>
             where TGenome : class, IGenome<TGenome>
     {
-        //public static object locker = new object();
-
-        public BattleEvaluator()
+        PlayerController player;
+        public BattleEvaluator(PlayerController player)
         {
-
+            this.player = player;
         }
 
         public ulong EvaluationCount { get; set; }
@@ -28,10 +27,27 @@ namespace Assets.Source
 
         public IEnumerator Evaluate(IList<TGenome> genomeList)
         {
-            yield return Coroutiner.StartCoroutine(SimController.simInstance.StartEvaluatingGenomes((List<NeatGenome>)genomeList));
-            Debug.Log(String.Format("Evaluation {0} finished", EvaluationCount));
+            yield return Coroutiner.StartCoroutine(SimController.simInstance.coEvaluator.SubmitGenomesAndWaitUntilTheyAreEvaluated((List<NeatGenome>)genomeList, player));
 
-            EvaluationCount++;
+            #region Log statistics and delete fitness
+            float totalFitness = 0;
+            float mxFitness = (float)genomeList[0].EvaluationInfo.Fitness;
+            float totalComplexity = 0;
+            float mxComplexity = (float)genomeList[0].Complexity;
+            foreach (var genome in genomeList)
+            {
+                totalFitness += (float)genome.EvaluationInfo.Fitness;
+                mxFitness = Math.Max(mxFitness, (float)genome.EvaluationInfo.Fitness);
+                totalComplexity += (float)genome.Complexity;
+                mxComplexity = Math.Max(mxComplexity, (float)genome.Complexity);
+            }
+            Debug.Log(String.Format("Max fitness is {0}; Mean fitnes is {1}; Max complexity is {2}; Mean complexity is {3}",
+                mxFitness,
+                totalFitness / genomeList.Count,
+                mxComplexity,
+                totalComplexity / genomeList.Count));
+            #endregion
+            Debug.Log($"Evaluation {++EvaluationCount} of team {player.Team} has finished");
         }
 
         public void Reset()
