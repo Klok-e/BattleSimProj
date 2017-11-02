@@ -64,6 +64,7 @@ public class WarriorController : MonoBehaviour
 
     public void Tick()
     {
+        AddFitnessToThis(Vector3.Distance(transform.position, PlayerOwner.transform.position) * 0.00001f);//encourage to be near it's owner
         currentAction.Tick();
     }
 
@@ -130,14 +131,16 @@ public class WarriorController : MonoBehaviour
                     //Debug.Log(hit.point + "warr" + hit.distance);
                     eyeData[j + 1] = 1;
                     eyeData[j + 2] = other.team == team ? 0 : 1;//0 if same team else 1
-                    eyeData[j + 3] = Vector2.Angle(other.transform.up, transform.up) * Mathf.Deg2Rad;//4th element is angle between this warrior and other
+                    eyeData[j + 3] = (Vector2.Angle(other.transform.up, transform.up) * Mathf.Deg2Rad);//4th element is angle between this warrior and other
+                    //eyeData[j + 3] = NormalizeAngle((other.transform.up - transform.up).normalized);
                 }
                 else if (hit.collider.tag.Equals("Projectile"))
                 {
                     var projectile = hit.collider.GetComponent<ProjectileController>();
                     eyeData[j + 1] = 0;
                     eyeData[j + 2] = -1;//-1 - projectile
-                    eyeData[j + 3] = Vector2.Angle(transform.TransformPoint(projectile.Direction), transform.up) * Mathf.Deg2Rad;
+                    eyeData[j + 3] = (Vector2.Angle(projectile.transform.up, transform.up) * Mathf.Deg2Rad);
+                    //eyeData[j + 3] = NormalizeAngle((transform.TransformPoint(projectile.Direction) - transform.up).normalized);
                 }
             }
             j += 4; //every eye must see distance and what is it
@@ -394,9 +397,10 @@ public static class Actions
                 var posBeforeMove = moves.transform.position;
                 moves.transform.Rotate(new Vector3(0, 0, rotateBy));
                 moves.transform.Translate(Vector3.up * speed);
+
                 moves.AddFitnessToThis(
                     Mathf.Max(Vector3.Distance(posBeforeMove, moves.PlayerOwner.transform.position) -
-                    Vector3.Distance(moves.transform.position, moves.PlayerOwner.transform.position), 0) * 0.007f);//if approached to owner then encourage
+                    Vector3.Distance(moves.transform.position, moves.PlayerOwner.transform.position), 0) * 0.003f);//if approached to owner then encourage
             }
         }
     }

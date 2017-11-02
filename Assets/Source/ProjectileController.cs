@@ -4,25 +4,23 @@ using UnityEngine;
 
 public class ProjectileController : MonoBehaviour
 {
-    public Vector2 Direction { get { return direction; } }
-    private Vector2 direction;
-
     private WarriorController whoShoots;
     private float damage;
+    private Vector3 speed;
 
     public void Initialize(Vector2 start, Vector2 direction, float damage, WarriorController shooter)
     {
         this.transform.position = start;
-        this.direction = direction;
+        transform.up = direction;
         this.damage = damage;
         this.whoShoots = shooter;
+        speed = Vector3.up * HelperConstants.projectileSpeed;
     }
 
     public void Tick()
     {
-        var speed = Direction * HelperConstants.projectileSpeed;
+        speed *= 0.97f;
         transform.Translate(speed);
-        direction *= 0.97f;
         if (speed.magnitude < 0.1)
         {
             Die();
