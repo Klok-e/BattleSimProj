@@ -4,21 +4,24 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class GoToMenuBtnCntrl : MonoBehaviour
+namespace SimEditor
 {
-    AssetBundle myLoadedAssetBundle;
-    string scenePath;
-    // Use this for initialization
-    void Start()
+    public class GoToMenuBtnCntrl : MonoBehaviour
     {
-        scenePath = "Assets/Resources/MenuScreenScene.unity";
+        AssetBundle myLoadedAssetBundle;
+        string scenePath;
+        // Use this for initialization
+        void Start()
+        {
+            scenePath = "Assets/Resources/MenuScreenScene.unity";
 
-        var button = GetComponent<Button>();
-        button.onClick.AddListener(Task);
-    }
+            var button = GetComponent<Button>();
+            button.onClick.AddListener(Task);
+        }
 
-    void Task()
-    {
-        SceneManager.LoadScene(scenePath);
+        void Task()
+        {
+            SceneManager.LoadScene(scenePath);
+        }
     }
 }

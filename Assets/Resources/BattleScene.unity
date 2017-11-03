@@ -1310,7 +1310,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1075780845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1375,7 +1375,7 @@ RectTransform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1075780844}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 472.5, y: 206.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1645802573}
@@ -1728,7 +1728,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1146106644
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1793,7 +1793,7 @@ RectTransform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1146106643}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 472.5, y: 206.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1223024473}
@@ -1851,11 +1851,12 @@ MonoBehaviour:
     type: 2}
   obstaclePref: {fileID: 1025125970086404, guid: 6e638542d5388ae43809a45004e3a7d7,
     type: 2}
-  playerPref: {fileID: 1102119936612520, guid: 494456801b5a9134a9d88fafded0df99, type: 2}
+  playerPref: {fileID: 1102119936612520, guid: 18de92b3a8e09924da2206d0be0af096, type: 2}
   blocksParent: {fileID: 0}
   warriorsParent: {fileID: 0}
   projectilesParent: {fileID: 0}
   playersParent: {fileID: 0}
+  loadMenuInst: {fileID: 158948885}
   warriorsSet: 0
   loadedNets: 0
 --- !u!1 &1223024472

@@ -240,6 +240,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Source\APlayerContoller.cs" />
     <Compile Include="Assets\Source\Battle Mode\BattleManager.cs" />
     <Compile Include="Assets\Source\Battle Mode\BattlePlayer.cs" />
     <Compile Include="Assets\Source\Battle Mode\UI\InitializeBattleManagerButton.cs" />
@@ -409,7 +410,7 @@
     <Compile Include="Assets\Source\ProjectileController.cs" />
     <Compile Include="Assets\Source\SimEditor\BattleEvaluator.cs" />
     <Compile Include="Assets\Source\SimEditor\BattleExperiment.cs" />
-    <Compile Include="Assets\Source\SimEditor\BlockController.cs" />
+    <Compile Include="Assets\Source\BlockController.cs" />
     <Compile Include="Assets\Source\SimEditor\CoEvaluator.cs" />
     <Compile Include="Assets\Source\SimEditor\GameManagerController.cs" />
     <Compile Include="Assets\Source\SimEditor\PlayerController.cs" />

@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class WarriorController : MonoBehaviour
 {
-    public string toShowOnGui;
     SpriteRenderer sprRend;
 
     public const float distanceOfAttack = 1f;
@@ -19,8 +18,8 @@ public class WarriorController : MonoBehaviour
     private float bloodRemaining;
     private float bloodMax;
 
-    public PlayerController PlayerOwner { get { return playerOwner; } }
-    private PlayerController playerOwner;
+    public APlayerContoller PlayerOwner { get { return playerOwner; } }
+    private APlayerContoller playerOwner;
 
     private void Start()
     {
@@ -29,7 +28,7 @@ public class WarriorController : MonoBehaviour
         //sprRend.color = team == 1 ? Color.blue : Color.red;
     }
 
-    public void Initialize(Vector2 pos, StructureOfWarrior str, int team, NeuralAI ai, PlayerController pla)
+    public void Initialize(Vector2 pos, StructureOfWarrior str, int team, NeuralAI ai, APlayerContoller pla)
     {
         transform.position = pos;
 
@@ -64,13 +63,11 @@ public class WarriorController : MonoBehaviour
 
     public void Tick()
     {
-        AddFitnessToThis(Vector3.Distance(transform.position, PlayerOwner.transform.position) * 0.00001f);//encourage to be near it's owner
         currentAction.Tick();
     }
 
     public Actions.Action ChooseAction()
     {
-        toShowOnGui = "";
         var data = GatherDataOfEnvironment();
         var pred = ai.Predict(data);
         Actions.Action action;
@@ -152,10 +149,7 @@ public class WarriorController : MonoBehaviour
         var deltaVector = (playerOwner.transform.position - transform.position).normalized;
         dataData.Add(NormalizeAngle(deltaVector));//magic
 
-        #region string to show
         var temp = dataData.ToArray();
-        toShowOnGui += Helpers.ArrayToString(temp) + "\n";
-        #endregion
         Debug.Assert(HelperConstants.totalAmountOfSensors == temp.Length);
         return temp;//30 sensors total
     }
@@ -204,10 +198,6 @@ public class WarriorController : MonoBehaviour
          * [3] - whether to dodge
          * [4] - whether to block
         */
-
-        #region to show
-        toShowOnGui += Helpers.ArrayToString(pred);
-        #endregion
 
         var angle = (float)(pred[0] > 0.5 ? 0.5 * rotationSpeed : -0.5 * rotationSpeed);
 
@@ -318,8 +308,8 @@ public static class Actions
                     var collWarr = coll.GetComponent<WarriorController>();
                     if (collWarr.LoseBlood(damage))//TODO: random limbs must be
                     {
-                        collWarr.AddFitnessToThis(collWarr.team == warr.team ? 0 : 0.5f);//encourage death from enemies
-                        warr.AddFitnessToThis(collWarr.team == warr.team ? -0.4f : 1);//if team the same then subtract 0.4
+                        collWarr.AddFitnessToThis(collWarr.team == warr.team ? 0 : HelperConstants.fitnessBonusForDyingFromEnemy);//encourage death from enemies
+                        warr.AddFitnessToThis(collWarr.team == warr.team ? -HelperConstants.fitnessBonusForDyingFromEnemy : HelperConstants.fitnessForKillingAnEnemy);//if team the same then
                     }
                 }
             }
@@ -349,7 +339,7 @@ public static class Actions
             Debug.DrawRay(warr.transform.position, direction);
             if (isFinished)
             {
-                GameManagerController.inputManagerInstance.simInst.CreateNewProjectile((Vector2)warr.transform.position + direction, direction, damage, warr);
+                SimEditor.GameManagerController.inputManagerInstance.simInst.CreateNewProjectile((Vector2)warr.transform.position + direction, direction, damage, warr);
             }
         }
     }
@@ -398,9 +388,20 @@ public static class Actions
                 moves.transform.Rotate(new Vector3(0, 0, rotateBy));
                 moves.transform.Translate(Vector3.up * speed);
 
-                moves.AddFitnessToThis(
-                    Mathf.Max(Vector3.Distance(posBeforeMove, moves.PlayerOwner.transform.position) -
-                    Vector3.Distance(moves.transform.position, moves.PlayerOwner.transform.position), 0) * 0.003f);//if approached to owner then encourage
+                var plOwnerTrPos = moves.PlayerOwner.transform.position;
+                var distMovedTowPl = Vector3.Distance(posBeforeMove, plOwnerTrPos) - Vector3.Distance(moves.transform.position, plOwnerTrPos);
+
+                var ftns = distMovedTowPl > 0 ? distMovedTowPl * HelperConstants.fitnessMultiplierForApproachingToFlag : 0;
+                if (ftns > 100)
+                {
+                    Debug.Log("hui");
+                }
+                var divider = (float)Math.Pow(Vector3.Distance(moves.transform.position, plOwnerTrPos), 2);
+                divider = divider < 1 ? 1 : divider;
+
+                var toAdd = (ftns / divider) ;//if approached to owner then encourage
+
+                moves.AddFitnessToThis(toAdd);
             }
         }
     }

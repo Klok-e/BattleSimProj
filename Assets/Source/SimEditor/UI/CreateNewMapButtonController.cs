@@ -4,32 +4,35 @@ using UnityEngine;
 using UnityEngine.UI;
 using System;
 
-public class CreateNewMapButtonController : MonoBehaviour
+namespace SimEditor
 {
-    public InputField inputHeight;
-    public InputField inputWidth;
-
-    // Use this for initialization
-    void Start()
+    public class CreateNewMapButtonController : MonoBehaviour
     {
-        Button button = GetComponent<Button>();
-        button.onClick.AddListener(TaskOnClick);
-    }
+        public InputField inputHeight;
+        public InputField inputWidth;
 
-    void TaskOnClick()
-    {
-        int width;
-        int height;
-        try
+        // Use this for initialization
+        void Start()
         {
-            int.TryParse(inputWidth.text, out width);
-            int.TryParse(inputHeight.text, out height);
-
-            GameManagerController.inputManagerInstance.simInst.CreateNewMap(width, height);
+            Button button = GetComponent<Button>();
+            button.onClick.AddListener(TaskOnClick);
         }
-        catch (Exception e)
+
+        void TaskOnClick()
         {
-            Debug.Log(e);
+            int width;
+            int height;
+            try
+            {
+                int.TryParse(inputWidth.text, out width);
+                int.TryParse(inputHeight.text, out height);
+
+                GameManagerController.inputManagerInstance.simInst.CreateNewMap(width, height);
+            }
+            catch (Exception e)
+            {
+                Debug.Log(e);
+            }
         }
     }
 }

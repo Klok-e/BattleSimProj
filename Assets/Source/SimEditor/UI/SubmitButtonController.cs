@@ -3,29 +3,31 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
-public class SubmitButtonController : MonoBehaviour
+namespace SimEditor
 {
-    public InputField inputField;
-
-    // Use this for initialization
-    void Start()
+    public class SubmitButtonController : MonoBehaviour
     {
-        var button = GetComponent<Button>();
-        button.onClick.AddListener(TaskOnClick);
-    }
+        public InputField inputField;
 
-    void TaskOnClick()
-    {
-        var txt = inputField.text;
-        Debug.Log("Saved in " + txt);
-        try
+        // Use this for initialization
+        void Start()
         {
-            GameManagerController.inputManagerInstance.SaveCurrentPlayer(txt);
+            var button = GetComponent<Button>();
+            button.onClick.AddListener(TaskOnClick);
         }
-        catch (Exception e)
+
+        void TaskOnClick()
         {
-            Debug.Log("Couldn't save: " + e);
+            var txt = inputField.text;
+            Debug.Log("Saved in " + txt);
+            try
+            {
+                GameManagerController.inputManagerInstance.SaveCurrentPlayer(txt);
+            }
+            catch (Exception e)
+            {
+                Debug.Log("Couldn't save: " + e);
+            }
         }
     }
 }

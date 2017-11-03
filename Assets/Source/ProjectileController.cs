@@ -40,12 +40,12 @@ public class ProjectileController : MonoBehaviour
                 {
                     if (otherWarr.team != whoShoots.team)
                     {
-                        otherWarr.AddFitnessToThis(0.4f);
-                        whoShoots.AddFitnessToThis(1);
+                        otherWarr.AddFitnessToThis(HelperConstants.fitnessBonusForDyingFromEnemy);
+                        whoShoots.AddFitnessToThis(HelperConstants.fitnessForKillingAnEnemy);
                     }
                     else
                     {
-                        whoShoots.AddFitnessToThis(-0.4f);
+                        whoShoots.AddFitnessToThis(-HelperConstants.fitnessBonusForDyingFromEnemy);
                     }
                 }
                 Die();

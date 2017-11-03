@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 
 
-class BattlePlayer : MonoBehaviour
+class BattlePlayer : APlayerContoller
 {
     public int Team { get { return team; } }
     private int team;
@@ -27,6 +27,11 @@ class BattlePlayer : MonoBehaviour
         this.team = team;
         initialized = true;
         phenomes = pheno;
+    }
+
+    public void SpawnWarriors()
+    {
+        throw new NotImplementedException();
     }
 
     public void UserInputTick()

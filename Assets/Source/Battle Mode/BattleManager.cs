@@ -11,7 +11,6 @@ using System.Linq;
 
 public class BattleManager : MonoBehaviour
 {
-
     public static BattleManager battleManagerInst;
 
     public GameObject tilePref;
@@ -26,15 +25,6 @@ public class BattleManager : MonoBehaviour
     [HideInInspector] public GameObject projectilesParent;
     [HideInInspector] public GameObject playersParent;
 
-    System.Random random;
-
-    int warriorsTotal;
-
-    [HideInInspector] private int height;
-    [HideInInspector] private int width;
-
-    private List<IBlackBox>[] playersNets;
-
     public static StructureOfWarrior defaultWarStrct = new StructureOfWarrior()
     {
         blood = 1000,
@@ -45,13 +35,26 @@ public class BattleManager : MonoBehaviour
             }
     };
 
+    System.Random random;
+
+    int warriorsTotal;
+
+    [HideInInspector] private int height;
+    [HideInInspector] private int width;
+
+    private List<IBlackBox>[] playersNets;
+
+    public LoadBattleMenu loadMenuInst;
+
     private void Start()
     {
         battleManagerInst = this;
         SaveLoad.Load();
+        loadMenuInst.Refresh();
         playersNets = new List<IBlackBox>[2];//bcos 2 players
     }
 
+    #region UI related methods
     public void InitializeEverything()
     {
         InitializeMap();
@@ -60,8 +63,13 @@ public class BattleManager : MonoBehaviour
 
     public void StartGame()
     {
-        throw new NotImplementedException();
+        foreach (Transform item in playersParent.transform)
+        {
+            item.GetComponent<BattlePlayer>().SpawnWarriors();
+        }
+        //TODO: this
     }
+    #endregion
 
     void InitializeMap()
     {
@@ -93,7 +101,7 @@ public class BattleManager : MonoBehaviour
     public void LoadGenomesToPlIndex(string filename, int ind)
     {
         Debug.Assert(0 <= ind && ind <= 1);//0 or 1 only
-        var exp = new BattleExperiment();
+        var exp = new SimEditor.BattleExperiment();
         var dec = exp.CreateDecoder();
 
         var pop = exp.LoadPopulation(filename);
@@ -159,12 +167,12 @@ public class BattleManager : MonoBehaviour
         return scrpt;
     }
 
-    private WarriorController CreateNewWarrior(Vector2 pos, StructureOfWarrior str, int team, NeuralAI ai, PlayerController pla)
+    private WarriorController CreateNewWarrior(Vector2 pos, StructureOfWarrior str, int team, NeuralAI ai, BattlePlayer pla)
     {
         var newObj = Instantiate(warrPref, warriorsParent.transform);
 
         var scrpt = newObj.GetComponent<WarriorController>();
-        scrpt.Initialize(pos, str, team, ai, pla);
+        //scrpt.Initialize(pos, str, team, ai, pla);
 
         return scrpt;
     }

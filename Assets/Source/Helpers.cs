@@ -25,15 +25,20 @@ static class Helpers
 
 static class HelperConstants
 {
+    public const string saveDirectory = "/save/";
     public const int totalAmountOfSensors = 30;
     public const int totalAmountOfOutputsOfNet = 5;
-    public const float speedMultOfWa = 0.2f;
-    public const int complexityThreshold = 100;
-    public const int warriorSpawnOffset = 4;
-    public const float warriorRotationSpeed = 10f;
-    public const float projectileSpeed = 0.6f;
-    public const int evaluationsPerGeneration = 3;
-    public const int ticksPerEvaluation = 1000;
-    public const int warriorsPerPlayer = 50;
+    public static float speedMultOfWa = 0.2f;
+    public static int complexityThreshold = 100;
+    public static int warriorSpawnOffset = 4;
+    public static float warriorRotationSpeed = 10f;
+    public static float projectileSpeed = 0.6f;
+    public static int evaluationsPerGeneration = 3;
+    public static int ticksPerEvaluation = 1000;
+    public static int warriorsPerPlayer = 50;
+    public static float fitnessBonusForDyingFromEnemy = 0;//0.4f
+    public static float fitnessForKillingAnEnemy = 0;//1f
+    public static float fitnessMultiplierForApproachingToFlag = 0;//0.003f
+    public static float fitnessMultiplierForBeingNearFlag = 0;//0.00001f
 }
 

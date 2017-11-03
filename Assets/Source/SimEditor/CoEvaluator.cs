@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Assets.Source
+namespace SimEditor
 {
     public class CoEvaluator
     {
