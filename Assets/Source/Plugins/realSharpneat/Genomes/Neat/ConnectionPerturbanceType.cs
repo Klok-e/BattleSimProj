@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -21,10 +21,12 @@ namespace SharpNeat.Genomes.Neat
         /// Reset weight.
         /// </summary>
         Reset,
+
         /// <summary>
         /// Jiggle weight using deltas from a uniform distribution.
         /// </summary>
         JiggleUniform,
+
         /// <summary>
         /// Jiggle weight using deltas from a Gaussian distribution.
         /// </summary>

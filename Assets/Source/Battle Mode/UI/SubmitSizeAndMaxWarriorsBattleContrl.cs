@@ -1,43 +1,50 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
-public class SubmitSizeAndMaxWarriorsBattleContrl : MonoBehaviour
+namespace BattleMode
 {
-    [SerializeField] GameObject mainCanvas;
-    [SerializeField] GameObject thisCanvas;
-
-    [SerializeField] InputField width;
-    [SerializeField] InputField height;
-    [SerializeField] InputField maxWarr;
-
-    Button button;
-
-    void Start()
+    public class SubmitSizeAndMaxWarriorsBattleContrl : MonoBehaviour
     {
-        button = GetComponent<Button>();
-        button.onClick.AddListener(Task);
-    }
+        [SerializeField] private GameObject panelToEnableAfterPress;
+        [SerializeField] private GameObject thisPanel;
+        [SerializeField] private LoadBattleMenu loadGenomesMenu;
 
-    void Task()
-    {
-        int hei;
-        bool heiSuc = int.TryParse(height.text, out hei);
-        int wid;
-        bool widSuc = int.TryParse(width.text, out wid);
-        int maxW;
-        bool maxWSuc = int.TryParse(maxWarr.text, out maxW);
+        [SerializeField] private InputField width;
+        [SerializeField] private InputField height;
+        [SerializeField] private InputField maxWarr;
 
-        if (heiSuc && widSuc && maxWSuc)
+        private Button button;
+
+        private void Start()
         {
-            mainCanvas.SetActive(true);
-            thisCanvas.SetActive(false);
-            BattleManager.battleManagerInst.SetMapSizeAndWarriors(wid, hei, maxW);
+            button = GetComponent<Button>();
+            button.onClick.AddListener(Task);
         }
-        else
+
+        private void Task()
         {
-            Debug.Log("Error");
+            int hei;
+            bool heiSuc = int.TryParse(height.text, out hei);
+            int wid;
+            bool widSuc = int.TryParse(width.text, out wid);
+            int maxW;
+            bool maxWSuc = int.TryParse(maxWarr.text, out maxW);
+
+            if (heiSuc && widSuc && maxWSuc)
+            {
+                panelToEnableAfterPress.SetActive(true);
+                thisPanel.SetActive(false);
+                new StartBattleSettings();
+                StartBattleSettings.singleton.SetSize(wid, hei);
+                StartBattleSettings.singleton.SetWarriors(maxW);
+                StartBattleSettings.singleton.ResetNets();
+                SaveLoad.Load();
+                loadGenomesMenu.Refresh();
+            }
+            else
+            {
+                Debug.Log("Error");
+            }
         }
     }
 }

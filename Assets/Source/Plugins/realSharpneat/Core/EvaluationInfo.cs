@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,19 +9,19 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
-using System;
+
 using Redzen.Structures;
-using SharpNeat.Utility;
+using System;
 
 namespace SharpNeat.Core
 {
     /// <summary>
     /// Encapsulates genome evaluation data; specifically whether the genome has been evaluated, the genome's fitness,
     /// how many times the genome has been evaluated and if more than once then the mean fitness.
-    /// 
-    /// Mean fitness is sometimes used when evaluations are non-deterministic (where each evaluation with the 
-    /// same parameters results in a different fitness, usually following some distribution curve) or else 
-    /// successive evaluations use different evaluation parameters and therefore result in different fitnesses. 
+    ///
+    /// Mean fitness is sometimes used when evaluations are non-deterministic (where each evaluation with the
+    /// same parameters results in a different fitness, usually following some distribution curve) or else
+    /// successive evaluations use different evaluation parameters and therefore result in different fitnesses.
     /// This approach is sometimes used in order to evaluate against a very computationally expensive fitness
     /// scheme, or indeed a computationally intractable scheme - i.e. we only execute against some subset of the
     /// problem space for each genome evaluation, and thus we obtain a more representative value for a genome's
@@ -29,14 +29,14 @@ namespace SharpNeat.Core
     /// </summary>
     public class EvaluationInfo
     {
-        readonly DoubleCircularBufferWithStats _fitnessHistory;
-        readonly int _fitnessHistoryLength;
+        private readonly DoubleCircularBufferWithStats _fitnessHistory;
+        private readonly int _fitnessHistoryLength;
 
-        double _fitness;
-        bool _isEvaluated;
-        uint _evaluationCount;
-        uint _evaluationPassCount;
-        AuxFitnessInfo[] _auxFitnessArr;
+        private double _fitness;
+        private bool _isEvaluated;
+        private uint _evaluationCount;
+        private uint _evaluationPassCount;
+        private AuxFitnessInfo[] _auxFitnessArr;
 
         #region Constructor
 
@@ -47,18 +47,19 @@ namespace SharpNeat.Core
         public EvaluationInfo(int fitnessHistoryLength)
         {
             _fitnessHistoryLength = fitnessHistoryLength;
-            if(0 != fitnessHistoryLength) {
+            if (0 != fitnessHistoryLength)
+            {
                 _fitnessHistory = new DoubleCircularBufferWithStats(fitnessHistoryLength);
             }
         }
 
-        #endregion
+        #endregion Constructor
 
         #region Properties
 
         /// <summary>
         /// Gets the fitness value to be used by the evolution algorithm for selection of genomes
-        /// (for reproduction) and species fitness sharing. If a fitness buffer is in use this will be the 
+        /// (for reproduction) and species fitness sharing. If a fitness buffer is in use this will be the
         /// average fitness for the last N fitness evaluations as held by the fitness history buffer,
         /// otherwise if no buffer is in use it is simply the fitness from the most recent evaluation.
         /// </summary>
@@ -82,10 +83,10 @@ namespace SharpNeat.Core
         /// </summary>
         public double MeanFitness
         {
-            get 
+            get
             {   // Note. throws an exception if there is no fitness history. If you want a mean you must
                 // store fitness history.
-                return _fitnessHistory.Mean; 
+                return _fitnessHistory.Mean;
             }
         }
 
@@ -108,11 +109,11 @@ namespace SharpNeat.Core
         }
 
         /// <summary>
-        /// Gets the total number of times the genome has been evaluated. 
+        /// Gets the total number of times the genome has been evaluated.
         /// </summary>
         public uint EvaluationCount
         {
-            get { return _evaluationCount;  }
+            get { return _evaluationCount; }
         }
 
         /// <summary>
@@ -123,8 +124,8 @@ namespace SharpNeat.Core
         /// </summary>
         public uint EvaluationPassCount
         {
-            get { return _evaluationPassCount;  }
-            set { _evaluationPassCount = value;  }
+            get { return _evaluationPassCount; }
+            set { _evaluationPassCount = value; }
         }
 
         /// <summary>
@@ -143,7 +144,7 @@ namespace SharpNeat.Core
             get { return _fitnessHistoryLength; }
         }
 
-        #endregion
+        #endregion Properties
 
         #region Public Methods
 
@@ -153,7 +154,8 @@ namespace SharpNeat.Core
         /// </summary>
         public void SetFitness(double fitness)
         {
-            if(fitness < 0.0 || double.IsNaN(fitness) || double.IsInfinity(fitness)) {
+            if (fitness < 0.0 || double.IsNaN(fitness) || double.IsInfinity(fitness))
+            {
                 throw new ArgumentOutOfRangeException("Negative fitness values are not valid.");
             }
 
@@ -161,7 +163,8 @@ namespace SharpNeat.Core
             _evaluationCount++;
             _fitness = fitness;
 
-            if(null != _fitnessHistory) {
+            if (null != _fitnessHistory)
+            {
                 _fitnessHistory.Enqueue(fitness);
             }
         }
@@ -174,6 +177,6 @@ namespace SharpNeat.Core
             _evaluationPassCount++;
         }
 
-        #endregion
+        #endregion Public Methods
     }
 }

@@ -2,16 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
 using UnityEngine;
+
 namespace SimEditor
 {
     public class GameManagerController : MonoBehaviour
     {
         public static GameManagerController inputManagerInstance;
-        bool isEditorMode;
+        private bool isEditorMode;
 
-        LineRenderer lineRenderer;
+        private LineRenderer lineRenderer;
 
-        public GameObject enabledOnlyInEditorMode;
+        public GameObject[] disabledInBrushMode;
+        public GameObject[] enabledOnlyInEditorMode;
         public GameObject saveLoadCurrPlayerPanel;
 
         public SimController simInst;
@@ -56,39 +58,65 @@ namespace SimEditor
         }
 
         // Update is called once per frame
-        void Update()
+        private void Update()
         {
             if (isEditorMode)
             {
-                if (currentlySelectedPlayer != null)
+                if (!brushMode)
                 {
-                    saveLoadCurrPlayerPanel.SetActive(true);
+                    SetBrushThings(false);
+                    if (currentlySelectedPlayer != null)
+                    {
+                        saveLoadCurrPlayerPanel.SetActive(true);
+                    }
+                    else
+                    {
+                        saveLoadCurrPlayerPanel.SetActive(false);
+                    }
+                    foreach (var item in enabledOnlyInEditorMode)
+                        item.SetActive(true);
                 }
                 else
                 {
-                    saveLoadCurrPlayerPanel.SetActive(false);
+                    SetThings(false);
+                    SetBrushThings(true);
                 }
-                enabledOnlyInEditorMode.SetActive(true);
             }
             else
             {
-                saveLoadCurrPlayerPanel.SetActive(false);
-                enabledOnlyInEditorMode.SetActive(false);
+                SetThings(false);
+                SetBrushThings(false);
             }
             ProcessUserInput();
         }
 
-        int amountOfWarriors;
+        private void SetThings(bool set)
+        {
+            saveLoadCurrPlayerPanel.SetActive(set);
+            foreach (var item in enabledOnlyInEditorMode)
+                item.SetActive(set);
+        }
+
+        private void SetBrushThings(bool set)
+        {
+            foreach (var item in disabledInBrushMode)
+                item.SetActive(!set);//bcos disabled
+        }
+
+        private int amountOfWarriors;
+
         public void SetAmountOfWarriors(int amount)
         {
             amountOfWarriors = amount;
         }
 
-        int team = 1;
+        private int team = 1;
+
         public void AddPlayer(int amountOfW, bool freeze)
         {
             simInst.AddPlayer(team++, amountOfW, freeze);
         }
+
         public void ResetPlayers()
         {
             team = 1;
@@ -101,6 +129,26 @@ namespace SimEditor
             isEditorMode = false;
             StartCoroutine(simInst.StartPerformingGenerations());
         }
+
+        private bool brushMode;
+
+        public void SetBrushMode(bool toSet)
+        {
+            brushMode = toSet;
+        }
+
+        public bool AnyPlayersPresent()
+        {
+            if (team > 1)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         public void StopRunningGenerations()
         {
             StartCoroutine(SetEditorModeWhenEvalsFinished());
@@ -120,13 +168,14 @@ namespace SimEditor
             }
         }
 
-        PlayerController currentlySelectedPlayer;
-        void ProcessUserInput()
+        private PlayerController currentlySelectedPlayer;
+
+        private void ProcessUserInput()
         {
             if (!EventSystem.current.IsPointerOverGameObject())
             {
                 var offsetVector = new Vector3(0, 0, 1);
-                if (Input.GetMouseButtonDown(0))
+                if (Input.GetMouseButtonDown(0) && !brushMode)//select flag
                 {
                     var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
                     var coll = Physics2D.OverlapCircle(worldPoint, 0.5f, LayerMask.GetMask("PlayerFlags"));
@@ -151,25 +200,51 @@ namespace SimEditor
                 }
                 if (isEditorMode)
                 {
-                    if (Input.GetMouseButton(0) && currentlySelectedPlayer != null)
+                    if (!brushMode)
                     {
-                        var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                        if (Input.GetMouseButton(0) && currentlySelectedPlayer != null)//set position
+                        {
+                            var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
-                        currentlySelectedPlayer.transform.position = (Vector2)worldPoint;
-                        currentlySelectedPlayer.pointsToVisitDuringTraining.Clear();
-                        currentlySelectedPlayer.pointsToVisitDuringTraining.Add(currentlySelectedPlayer.transform.position - offsetVector);
+                            currentlySelectedPlayer.transform.position = (Vector2)worldPoint;
+                            currentlySelectedPlayer.pointsToVisitDuringTraining.Clear();
+                            currentlySelectedPlayer.defaultPos = (worldPoint);
+                        }
+                        if (Input.GetMouseButtonDown(1) && currentlySelectedPlayer != null)
+                        {
+                            var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+                            currentlySelectedPlayer.pointsToVisitDuringTraining.Add(new Vector3(worldPoint.x, worldPoint.y) - offsetVector);
+                        }
+                        if (Input.GetMouseButtonDown(2) && currentlySelectedPlayer != null)//reset points
+                        {
+                            currentlySelectedPlayer.pointsToVisitDuringTraining.Clear();
+                        }
                     }
-
-                    if (Input.GetMouseButtonDown(1) && currentlySelectedPlayer != null)
+                    else
                     {
-                        var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                        if (Input.GetMouseButton(0))
+                        {
+                            var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                            var colls = Physics2D.OverlapCircleAll(worldPoint, HelperConstants.brushSize, LayerMask.GetMask("Tile"));
 
-                        currentlySelectedPlayer.pointsToVisitDuringTraining.Add(new Vector3(worldPoint.x, worldPoint.y) - offsetVector);
-                    }
-                    if (Input.GetMouseButtonDown(2) && currentlySelectedPlayer != null)
-                    {
-                        currentlySelectedPlayer.pointsToVisitDuringTraining.Clear();
-                        currentlySelectedPlayer.pointsToVisitDuringTraining.Add(currentlySelectedPlayer.transform.position - offsetVector);
+                            foreach (var item in colls)
+                            {
+                                simInst.CreateNewBlock(item.transform.position, false);
+                                Destroy(item.gameObject);
+                            }
+                        }
+                        if (Input.GetMouseButton(1))
+                        {
+                            var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                            var colls = Physics2D.OverlapCircleAll(worldPoint, HelperConstants.brushSize, LayerMask.GetMask("Obstacle"));
+
+                            foreach (var item in colls)
+                            {
+                                simInst.CreateNewBlock(item.transform.position, true);
+                                Destroy(item.gameObject);
+                            }
+                        }
                     }
                 }
             }

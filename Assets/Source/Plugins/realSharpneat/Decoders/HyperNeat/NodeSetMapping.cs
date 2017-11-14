@@ -1,6 +1,6 @@
 ﻿/* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,6 +9,7 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 using System.Collections.Generic;
 
 namespace SharpNeat.Decoders.HyperNeat
@@ -16,13 +17,13 @@ namespace SharpNeat.Decoders.HyperNeat
     /// <summary>
     /// Describes a mapping between nodesets.
     /// Packages an INodeSetMappingFunction with indexes into a list of node sets that identify the source
-    /// and target nodesets for the mapping. 
+    /// and target nodesets for the mapping.
     /// </summary>
     public class NodeSetMapping
     {
-        int _srcNodeSetIdx;
-        int _tgtNodeSetIdx;
-        INodeSetMappingFunction _mappingFn;
+        private int _srcNodeSetIdx;
+        private int _tgtNodeSetIdx;
+        private INodeSetMappingFunction _mappingFn;
 
         #region Constructor
 
@@ -36,7 +37,7 @@ namespace SharpNeat.Decoders.HyperNeat
             _mappingFn = mappingFn;
         }
 
-        #endregion
+        #endregion Constructor
 
         #region Properties
 
@@ -64,7 +65,7 @@ namespace SharpNeat.Decoders.HyperNeat
             get { return _mappingFn; }
         }
 
-        #endregion
+        #endregion Properties
 
         #region Public Methods
 
@@ -86,7 +87,7 @@ namespace SharpNeat.Decoders.HyperNeat
                                                      nodeSetList[_tgtNodeSetIdx]);
         }
 
-        #endregion
+        #endregion Public Methods
 
         #region Public Static Methods [Convenient Factory Methods]
 
@@ -107,14 +108,14 @@ namespace SharpNeat.Decoders.HyperNeat
         }
 
         /// <summary>
-        /// Creates a NodeSet from the provided source and target nodeset indexes, maximum connection distance for mappings/connections and 
+        /// Creates a NodeSet from the provided source and target nodeset indexes, maximum connection distance for mappings/connections and
         /// a flag defining if local recurrent connections should be created when mapping between nodes in the same nodeset.
         /// </summary>
-        public static NodeSetMapping Create(int srcNodeSetIdx, int tgtNodeSetIdx, double? maximumConnectionDistance,  bool allowLocalRecurrentConnections)
+        public static NodeSetMapping Create(int srcNodeSetIdx, int tgtNodeSetIdx, double? maximumConnectionDistance, bool allowLocalRecurrentConnections)
         {
             return new NodeSetMapping(srcNodeSetIdx, tgtNodeSetIdx, new DefaultNodeSetMappingFunction(maximumConnectionDistance, allowLocalRecurrentConnections));
         }
 
-        #endregion
+        #endregion Public Static Methods [Convenient Factory Methods]
     }
 }

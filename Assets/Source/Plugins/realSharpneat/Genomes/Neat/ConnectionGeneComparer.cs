@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,6 +9,7 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 using System.Collections.Generic;
 
 namespace SharpNeat.Genomes.Neat
@@ -26,15 +27,17 @@ namespace SharpNeat.Genomes.Neat
         public int Compare(ConnectionGene x, ConnectionGene y)
         {
             // Test the most likely cases first.
-            if (x.InnovationId < y.InnovationId) {
+            if (x.InnovationId < y.InnovationId)
+            {
                 return -1;
-            } 
-            if (x.InnovationId > y.InnovationId) {
+            }
+            if (x.InnovationId > y.InnovationId)
+            {
                 return 1;
-            } 
+            }
             return 0;
         }
 
-        #endregion
+        #endregion IComparer<ConnectionGene> Members
     }
 }

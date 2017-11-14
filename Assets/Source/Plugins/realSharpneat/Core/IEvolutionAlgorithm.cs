@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,6 +9,7 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 using System;
 using System.Collections.Generic;
 
@@ -76,8 +77,8 @@ namespace SharpNeat.Core
 
         /// <summary>
         /// Request that the algorithm pause and waits for the algorithm to do so. The algorithm
-        /// thread will pause when it is next convenient to do so and notifies any UpdateEvent 
-        /// listeners prior to returning control to the caller. Therefore it's generally a bad idea 
+        /// thread will pause when it is next convenient to do so and notifies any UpdateEvent
+        /// listeners prior to returning control to the caller. Therefore it's generally a bad idea
         /// to call this method from a GUI thread that also has code that may be called by the
         /// UpdateEvent - doing so will result in deadlocked threads.
         /// </summary>

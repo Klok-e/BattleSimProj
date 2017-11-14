@@ -1,15 +1,14 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class RunEditorButtonContrl : MonoBehaviour
+internal class RunEditorButtonContrl : MonoBehaviour
 {
-    AssetBundle myLoadedAssetBundle;
-    string scenePath;
+    private AssetBundle myLoadedAssetBundle;
+    private string scenePath;
+
     // Use this for initialization
-    void Start()
+    private void Start()
     {
         scenePath = "Assets/Resources/TrainScene.unity";
 
@@ -17,7 +16,7 @@ public class RunEditorButtonContrl : MonoBehaviour
         button.onClick.AddListener(Task);
     }
 
-    void Task()
+    private void Task()
     {
         SceneManager.LoadScene(scenePath);
     }

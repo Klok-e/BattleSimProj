@@ -1,6 +1,6 @@
 ﻿/* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,11 +9,12 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
+using SharpNeat.Network;
+using SharpNeat.Phenomes.NeuralNets;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using SharpNeat.Network;
-using SharpNeat.Phenomes.NeuralNets;
 
 namespace SharpNeat.Decoders
 {
@@ -31,7 +32,7 @@ namespace SharpNeat.Decoders
         {
             Debug.Assert(!CyclicNetworkTest.IsNetworkCyclic(networkDef), "Attempt to decode a cyclic network into a FastAcyclicNetwork.");
 
-            // Determine the depth of each node in the network. 
+            // Determine the depth of each node in the network.
             // Node depths are used to separate the nodes into depth based layers, these layers can then be
             // used to determine the order in which signals are propagated through the network.
             AcyclicNetworkDepthAnalysis depthAnalysis = new AcyclicNetworkDepthAnalysis();
@@ -43,7 +44,7 @@ namespace SharpNeat.Decoders
             INodeList nodeList = networkDef.NodeList;
             int nodeCount = nodeList.Count;
             NodeInfo[] nodeInfoByDepth = new NodeInfo[nodeCount];
-            for(int i=0; i<nodeCount; i++)
+            for (int i = 0; i < nodeCount; i++)
             {
                 nodeInfoByDepth[i]._nodeId = nodeList[i].Id;
                 nodeInfoByDepth[i]._definitionIdx = i;
@@ -56,18 +57,18 @@ namespace SharpNeat.Decoders
             // we must restrict the range of the sort to ensure the input and bias node indexes are unchanged. Restricting the
             // sort to the required range is also more efficient (less items to sort).
             int inputAndBiasCount = networkDef.InputNodeCount + 1;
-            Array.Sort(nodeInfoByDepth, inputAndBiasCount, nodeCount-inputAndBiasCount, NodeDepthComparer.__NodeDepthComparer);
+            Array.Sort(nodeInfoByDepth, inputAndBiasCount, nodeCount - inputAndBiasCount, NodeDepthComparer.__NodeDepthComparer);
 
-            // Array of live node indexes indexed by their index in the original network definition. This allows us to 
+            // Array of live node indexes indexed by their index in the original network definition. This allows us to
             // locate the position of input and output nodes in their new positions in the live network data structures.
             int[] newIdxByDefinitionIdx = new int[nodeCount];
 
             // Dictionary of live node indexes keyed by node ID. This allows us to convert the network definition connection
             // endpoints from node IDs to indexes into the live/runtime network data structures.
-            Dictionary<uint,int> newIdxById = new Dictionary<uint,int>(nodeCount);
+            Dictionary<uint, int> newIdxById = new Dictionary<uint, int>(nodeCount);
 
             // Populate both the lookup array and dictionary.
-            for(int i=0; i<nodeCount; i++) 
+            for (int i = 0; i < nodeCount; i++)
             {
                 NodeInfo nodeInfo = nodeInfoByDepth[i];
                 newIdxByDefinitionIdx[nodeInfo._definitionIdx] = i;
@@ -84,73 +85,76 @@ namespace SharpNeat.Decoders
             IActivationFunctionLibrary activationFnLibrary = networkDef.ActivationFnLibrary;
             IActivationFunction[] nodeActivationFnArr = new IActivationFunction[nodeCount];
             double[][] nodeAuxArgsArray = new double[nodeCount][];
-            for(int i=0; i<nodeCount; i++) 
+            for (int i = 0; i < nodeCount; i++)
             {
                 int definitionIdx = nodeInfoByDepth[i]._definitionIdx;
                 nodeActivationFnArr[i] = activationFnLibrary.GetFunction(nodeList[definitionIdx].ActivationFnId);
                 nodeAuxArgsArray[i] = nodeList[definitionIdx].AuxState;
             }
 
-
-        //=== Create array of FastConnection(s). 
+            //=== Create array of FastConnection(s).
 
             // Loop the connections and lookup the node IDs for each connection's end points using newIdxById.
             IConnectionList connectionList = networkDef.ConnectionList;
             int connectionCount = connectionList.Count;
             FastConnection[] fastConnectionArray = new FastConnection[connectionCount];
 
-            for(int i=0; i<connectionCount; i++)
-            {   
+            for (int i = 0; i < connectionCount; i++)
+            {
                 INetworkConnection conn = connectionList[i];
                 fastConnectionArray[i]._srcNeuronIdx = newIdxById[conn.SourceNodeId];
                 fastConnectionArray[i]._tgtNeuronIdx = newIdxById[conn.TargetNodeId];
                 fastConnectionArray[i]._weight = conn.Weight;
             }
 
-            // Sort fastConnectionArray by source node index. This allows us to activate the connections in the 
-            // order they are present within the network (by depth). We also secondary sort by target index to 
+            // Sort fastConnectionArray by source node index. This allows us to activate the connections in the
+            // order they are present within the network (by depth). We also secondary sort by target index to
             // improve CPU cache coherency of the data (in order accesses that are as close to each other as possible).
-            Array.Sort(fastConnectionArray, delegate(FastConnection x, FastConnection y)
-            {   
-                if(x._srcNeuronIdx < y._srcNeuronIdx) {
+            Array.Sort(fastConnectionArray, delegate (FastConnection x, FastConnection y)
+            {
+                if (x._srcNeuronIdx < y._srcNeuronIdx)
+                {
                     return -1;
                 }
-                if(x._srcNeuronIdx > y._srcNeuronIdx) {
+                if (x._srcNeuronIdx > y._srcNeuronIdx)
+                {
                     return 1;
                 }
                 // Secondary sort on target index.
-                if(x._tgtNeuronIdx < y._tgtNeuronIdx) {
+                if (x._tgtNeuronIdx < y._tgtNeuronIdx)
+                {
                     return -1;
                 }
-                if(x._tgtNeuronIdx > y._tgtNeuronIdx) {
+                if (x._tgtNeuronIdx > y._tgtNeuronIdx)
+                {
                     return 1;
                 }
                 // Connections are equal (this should not actually happen).
                 return 0;
             });
 
-            // Create an array of LayerInfo(s). Each LayerInfo contains the index + 1 of both the last node and last 
+            // Create an array of LayerInfo(s). Each LayerInfo contains the index + 1 of both the last node and last
             // connection in that layer.
-            // The array is in order of depth, from layer zero (bias and inputs nodes) to the last layer 
+            // The array is in order of depth, from layer zero (bias and inputs nodes) to the last layer
             // (usually output nodes, but not necessarily if there is a dead end pathway with a high number of hops).
             // Note. There is guaranteed to be at least one connection with a source at a given depth level, this is
-            // because for there to be a layer N there must necessarily be a connection from a node in layer N-1 
+            // because for there to be a layer N there must necessarily be a connection from a node in layer N-1
             // to a node in layer N.
             int netDepth = netDepthInfo._networkDepth;
             LayerInfo[] layerInfoArr = new LayerInfo[netDepth];
 
-            // Scanning over nodes can start at inputAndBiasCount instead of zero, 
+            // Scanning over nodes can start at inputAndBiasCount instead of zero,
             // because we know that all nodes prior to that index are at depth zero.
             int nodeIdx = inputAndBiasCount;
             int connIdx = 0;
 
-            for(int currDepth=0; currDepth < netDepth; currDepth++)
+            for (int currDepth = 0; currDepth < netDepth; currDepth++)
             {
                 // Scan for last node at the current depth.
-                for(; nodeIdx < nodeCount && nodeInfoByDepth[nodeIdx]._nodeDepth == currDepth; nodeIdx++);
-                
+                for (; nodeIdx < nodeCount && nodeInfoByDepth[nodeIdx]._nodeDepth == currDepth; nodeIdx++) ;
+
                 // Scan for last connection at the current depth.
-                for(; connIdx < fastConnectionArray.Length && nodeInfoByDepth[fastConnectionArray[connIdx]._srcNeuronIdx]._nodeDepth == currDepth; connIdx++);
+                for (; connIdx < fastConnectionArray.Length && nodeInfoByDepth[fastConnectionArray[connIdx]._srcNeuronIdx]._nodeDepth == currDepth; connIdx++) ;
 
                 // Store node and connection end indexes for the layer.
                 layerInfoArr[currDepth]._endNodeIdx = nodeIdx;
@@ -161,11 +165,11 @@ namespace SharpNeat.Decoders
                                           nodeCount, networkDef.InputNodeCount, networkDef.OutputNodeCount);
         }
 
-        #endregion
+        #endregion Public Methods
 
         #region Inner Classes/Structs
 
-        class NodeDepthComparer : IComparer<NodeInfo>
+        private class NodeDepthComparer : IComparer<NodeInfo>
         {
             /// <summary>
             /// Singleton instance.
@@ -174,29 +178,31 @@ namespace SharpNeat.Decoders
 
             public int Compare(NodeInfo x, NodeInfo y)
             {
-                // Use fast method of comparison (subtraction) instead of performing multiple tests. 
+                // Use fast method of comparison (subtraction) instead of performing multiple tests.
                 // We can do this safely because this delta will always be well within the range on an Int32.
                 // (If you have a network with a greater depth range then you have other problems).
                 return x._nodeDepth - y._nodeDepth;
             }
         }
 
-        struct NodeInfo
+        private struct NodeInfo
         {
             /// <summary>
             /// The node's ID.
             /// </summary>
             public uint _nodeId;
+
             /// <summary>
             /// The node's index in the network definition. Input and output nodes are identifiable by this index.
             /// </summary>
             public int _definitionIdx;
+
             /// <summary>
             /// The node's depth within the network.
             /// </summary>
             public int _nodeDepth;
         }
 
-        #endregion
+        #endregion Inner Classes/Structs
     }
 }

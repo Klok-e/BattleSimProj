@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,6 +9,7 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,21 +19,21 @@ namespace SharpNeat.Core
     /// <summary>
     /// An IGenomeListEvaluator that wraps another IGenomeListEvaluator and filters/selects
     /// the genomes that are to be passed to the wrapped evaluator based on some predicate/test.
-    /// 
+    ///
     /// This class supports evaluation schemes whereby not all genomes in a population are evaluated
-    /// on each generation. E.g. if we wish to evaluate a genome that persists between generations 
+    /// on each generation. E.g. if we wish to evaluate a genome that persists between generations
     /// (i.e. elite genomes) just once (deterministic fitness score), or every N generations.
-    /// 
-    /// A typical use would be to wrap SimpleGenomeListEvaulator or ParallelGenomeListEvaluator. 
-    /// 
-    /// Genomes that skip evaluation have their EvaluationInfo.EvaluationPassCount property 
+    ///
+    /// A typical use would be to wrap SimpleGenomeListEvaulator or ParallelGenomeListEvaluator.
+    ///
+    /// Genomes that skip evaluation have their EvaluationInfo.EvaluationPassCount property
     /// incremented.
     /// </summary>
     public class SelectiveGenomeListEvaluator<TGenome> : IGenomeListEvaluator<TGenome>
         where TGenome : class, IGenome<TGenome>
     {
-        readonly IGenomeListEvaluator<TGenome> _innerEvaluator;
-        readonly Predicate<TGenome> _selectionPredicate;
+        private readonly IGenomeListEvaluator<TGenome> _innerEvaluator;
+        private readonly Predicate<TGenome> _selectionPredicate;
 
         #region Constructor
 
@@ -46,7 +47,7 @@ namespace SharpNeat.Core
             _selectionPredicate = selectionPredicate;
         }
 
-        #endregion
+        #endregion Constructor
 
         #region IGenomeListEvaluator<TGenome> Members
 
@@ -74,17 +75,17 @@ namespace SharpNeat.Core
         /// </summary>
         public void Evaluate(IList<TGenome> genomeList)
         {
-            // Select the genomes to be evaluated. Place them in a temporary list of genomes to be 
+            // Select the genomes to be evaluated. Place them in a temporary list of genomes to be
             // evaluated after the genome selection loop. The selection is not performed in series
             // so that we can wrap parallel execution versions of IGenomeListEvaluator.
             List<TGenome> filteredList = new List<TGenome>(genomeList.Count);
-            foreach(TGenome genome in genomeList)
+            foreach (TGenome genome in genomeList)
             {
-                if(_selectionPredicate.Invoke(genome)) 
+                if (_selectionPredicate.Invoke(genome))
                 {   // Add the genome to the temp list for evaluation later.
                     filteredList.Add(genome);
-                } 
-                else 
+                }
+                else
                 {   // Register that the genome skipped an evaluation.
                     genome.EvaluationInfo.EvaluationPassCount++;
                 }
@@ -102,7 +103,7 @@ namespace SharpNeat.Core
             _innerEvaluator.Reset();
         }
 
-        #endregion
+        #endregion IGenomeListEvaluator<TGenome> Members
 
         #region Commonly Used Predicates
 
@@ -111,7 +112,7 @@ namespace SharpNeat.Core
         /// </summary>
         public static Predicate<TGenome> CreatePredicate_OnceOnly()
         {
-            return delegate(TGenome genome)
+            return delegate (TGenome genome)
             {
                 return !genome.EvaluationInfo.IsEvaluated;
             };
@@ -122,11 +123,12 @@ namespace SharpNeat.Core
         /// </summary>
         public static Predicate<TGenome> CreatePredicate_PeriodicReevaluation(int period)
         {
-            if(period < 1) {
+            if (period < 1)
+            {
                 throw new ArgumentOutOfRangeException("period", "Period argument must be >= 1");
             }
 
-            return delegate(TGenome genome)
+            return delegate (TGenome genome)
             {
                 return genome.EvaluationInfo.TotalEvaluationCount % period == 0;
             };
@@ -137,6 +139,6 @@ namespace SharpNeat.Core
             throw new NotImplementedException();
         }
 
-        #endregion
+        #endregion Commonly Used Predicates
     }
 }

@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -23,13 +23,15 @@ namespace SharpNeat.Genomes.Neat
         /// A match between two connections in two distinct genomes.
         /// </summary>
         Match,
+
         /// <summary>
-        /// A connection with no match in the other genome (that we are comparing with) and that has 
+        /// A connection with no match in the other genome (that we are comparing with) and that has
         /// an innovation ID less than the highest innovation ID in the other genome,
         /// </summary>
         Disjoint,
+
         /// <summary>
-        /// A connection with no match in the other genome (that we are comparing with) and that has 
+        /// A connection with no match in the other genome (that we are comparing with) and that has
         /// an innovation ID higher than the highest innovation ID in the other genome.
         /// </summary>
         Excess

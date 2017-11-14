@@ -7,6 +7,7 @@ TagManager:
   - Obstacle
   - Warrior
   - Projectile
+  - Tile
   layers:
   - Default
   - TransparentFX
@@ -20,7 +21,7 @@ TagManager:
   - Warrior
   - Projectile
   - PlayerFlags
-  - 
+  - Tile
   - 
   - 
   - 

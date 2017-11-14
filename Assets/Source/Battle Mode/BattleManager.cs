@@ -1,190 +1,296 @@
-﻿using System.Collections;
+﻿using SharpNeat.Phenomes;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Threading;
-using System;
-using SharpNeat.Core;
-using SharpNeat.Phenomes;
-using SharpNeat.Genomes.Neat;
-using UnityEngine.UI;
-using System.Linq;
+using UnityEngine.EventSystems;
+using Warrior;
 
-public class BattleManager : MonoBehaviour
+namespace BattleMode
 {
-    public static BattleManager battleManagerInst;
-
-    public GameObject tilePref;
-    public GameObject warrPref;
-    public GameObject projectilePref;
-    public GameObject obstaclePref;
-    public GameObject playerPref;
-
-
-    [HideInInspector] public GameObject blocksParent;
-    [HideInInspector] public GameObject warriorsParent;
-    [HideInInspector] public GameObject projectilesParent;
-    [HideInInspector] public GameObject playersParent;
-
-    public static StructureOfWarrior defaultWarStrct = new StructureOfWarrior()
+    public class BattleManager : MonoBehaviour
     {
-        blood = 1000,
-        str = new List<Limb>(){
+        public static BattleManager battleManagerInst;
+
+        public GameObject tilePref;
+        public GameObject warrPref;
+        public GameObject projectilePref;
+        public GameObject obstaclePref;
+        public GameObject playerPref;
+
+        [HideInInspector] public GameObject blocksParent;
+        [HideInInspector] public GameObject warriorsParent;
+        [HideInInspector] public GameObject projectilesParent;
+        [HideInInspector] public GameObject playersParent;
+
+        public static StructureOfWarrior defaultWarStrct = new StructureOfWarrior()
+        {
+            blood = 1000,
+            str = new List<Limb>(){
             new Limb("default", 50f, 0.01f, false),
             new Limb("default", 50f, 0.01f, false),
             new Limb("default", 50f, 0.01f, false)
             }
-    };
+        };
 
-    System.Random random;
+        private System.Random random;
 
-    int warriorsTotal;
-
-    [HideInInspector] private int height;
-    [HideInInspector] private int width;
-
-    private List<IBlackBox>[] playersNets;
-
-    public LoadBattleMenu loadMenuInst;
-
-    private void Start()
-    {
-        battleManagerInst = this;
-        SaveLoad.Load();
-        loadMenuInst.Refresh();
-        playersNets = new List<IBlackBox>[2];//bcos 2 players
-    }
-
-    #region UI related methods
-    public void InitializeEverything()
-    {
-        InitializeMap();
-        InitPlayers();
-    }
-
-    public void StartGame()
-    {
-        foreach (Transform item in playersParent.transform)
+        private void Start()
         {
-            item.GetComponent<BattlePlayer>().SpawnWarriors();
+            battleManagerInst = this;
+
+            new StartBattleSettings();//init singleton
+
+            InitializeEverything();
         }
-        //TODO: this
-    }
-    #endregion
 
-    void InitializeMap()
-    {
-        Debug.Log("Initializing sim");
-        blocksParent = new GameObject("blocksParent");
-        warriorsParent = new GameObject("warriorsParent");
-        projectilesParent = new GameObject("projectilesParent");
-        playersParent = new GameObject("playersParent");
-
-        CreateNewMap(width, height);
-    }
-
-    void InitPlayers()
-    {
-        AddPlayer(1, new Vector2(2, 2), playersNets[0]);
-        AddPlayer(2, new Vector2(width - 2, height - 2), playersNets[1]);
-    }
-
-    public bool warriorsSet;
-    public void SetMapSizeAndWarriors(int width, int height, int warriors)
-    {
-        this.height = height;
-        this.width = width;
-        warriorsTotal = warriors;
-        warriorsSet = true;
-    }
-
-    public bool loadedNets;
-    public void LoadGenomesToPlIndex(string filename, int ind)
-    {
-        Debug.Assert(0 <= ind && ind <= 1);//0 or 1 only
-        var exp = new SimEditor.BattleExperiment();
-        var dec = exp.CreateDecoder();
-
-        var pop = exp.LoadPopulation(filename);
-
-        playersNets[ind] = new List<IBlackBox>();
-
-        while (playersNets[ind].Count < warriorsTotal)
+        private void InitializeEverything()
         {
-            for (int i = 0; i < pop.Count; i++)
+            InitializeMap();
+            InitPlayers();
+        }
+
+        private void Update()
+        {
+            ProcessUserInput();
+        }
+
+        private void ResetWarriorsToTheirDefaults()
+        {
+            var dict = new Dictionary<APlayerController, float[]>();
+            foreach (var warrior in allWarriors)
             {
-                if (playersNets[ind].Count >= warriorsTotal)
+                if (!dict.ContainsKey(warrior.PlayerOwner))
                 {
-                    break;
+                    dict.Add(warrior.PlayerOwner, new float[3] { 0, 1, 1 });//0 - shiftFromCenter, 1 - countShiftIsIncreasedMax, 2 - count
                 }
-                playersNets[ind].Add(dec.Decode(pop[i]));
+                if (dict[warrior.PlayerOwner][2] <= 0)
+                {
+                    dict[warrior.PlayerOwner][0] += warrior.GetComponent<CircleCollider2D>().radius;
+                    dict[warrior.PlayerOwner][1] *= 3;
+                    dict[warrior.PlayerOwner][2] = dict[warrior.PlayerOwner][1];
+                }
+                var pos = warrior.PlayerOwner.transform.position + (Vector3)Helpers.RandomVector2() * dict[warrior.PlayerOwner][0];
+                warrior.Revive(pos);
+                dict[warrior.PlayerOwner][2]--;
             }
         }
 
-        if (playersNets[0].Count == warriorsTotal && playersNets[1].Count == warriorsTotal)
+        private IEnumerator GameCoroutine()
         {
-            loadedNets = true;
-        }
-        Debug.Assert(loadedNets);
-    }
-
-    public void CreateNewMap(int width, int height)
-    {
-        random = new System.Random();
-        //generate map
-        for (int i = 0; i < width; i++)
-        {
-            for (int j = 0; j < height; j++)
+            CreateWarriors();
+            ResetWarriorsToTheirDefaults();
+            bool gameFinished = false;
+            while (gameFinished == false)
             {
-                var bl = CreateNewBlock(new Vector2(i, j), (i == 0 || i == width - 1 || j == 0 || j == height - 1) ? false : true);
+                gameFinished = Tick();
+                yield return new WaitForFixedUpdate();
+            }
+            DestroyWarriors();
+            battleStarted = false;
+        }
+
+        public bool Tick()
+        {
+            var projectiles = projectilesParent.GetComponentsInChildren<ProjectileController>();
+            foreach (var proj in projectiles)
+            {
+                proj.Tick();
+            }
+
+            var warriorsAlive = new Dictionary<int, int>();//team, amount
+            foreach (var warrior in allWarriors)
+            {
+                if (!warriorsAlive.ContainsKey(warrior.team))
+                {
+                    warriorsAlive.Add(warrior.team, 0);
+                }
+                if (warrior.gameObject.activeSelf)
+                {
+                    warriorsAlive[warrior.team] += 1;
+                    if (warrior.currentAction != null)
+                    {
+                        if (!warrior.currentAction.isFinished)
+                            warrior.Tick();
+                        else
+                            warrior.Tick(warrior.ChooseAction());
+                    }
+                }
+            }
+            int deadTeams = 0;
+            foreach (var keyVal in warriorsAlive)
+            {
+                if (keyVal.Value <= 0)
+                {
+                    deadTeams++;
+                }
+            }
+            if (deadTeams >= warriorsAlive.Count - 1)//all lost
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private WarriorController[] allWarriors;
+
+        private void CreateWarriors()
+        {
+            foreach (Transform item in playersParent.transform)
+            {
+                var pl = item.GetComponent<BattlePlayer>();
+                for (int i = 0; i < StartBattleSettings.singleton.warriorsTotal; i++)
+                {
+                    var w = CreateNewWarrior(pl.transform.position, defaultWarStrct, pl.Team,
+                        new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random, pl.phenomes[i]), pl);
+                }
+            }
+            allWarriors = warriorsParent.GetComponentsInChildren<WarriorController>();
+        }
+
+        private void DestroyWarriors()
+        {
+            foreach (Transform item in warriorsParent.transform)
+            {
+                Destroy(item.gameObject);
             }
         }
-        Debug.Log("Map created");
-    }
 
-    #region Create game object methods
-    private void AddPlayer(int team, Vector2 pos, List<IBlackBox> nets)
-    {
-        var pl = Instantiate(playerPref, playersParent.transform);
-        var scrpt = pl.GetComponent<BattlePlayer>();
+        #region UI related methods
 
-        scrpt.Initialize(pos, team, nets);
-    }
+        private bool battleStarted;
 
-    private BlockController CreateNewBlock(Vector2 pos, bool empty)
-    {
-        GameObject newObj;
-        if (empty)
+        public void StartGame()
         {
-            newObj = Instantiate(tilePref, blocksParent.transform);
+            if (battleStarted == false)
+            {
+                battleStarted = true;
+                StartCoroutine(GameCoroutine());
+            }
         }
-        else
+
+        private BattlePlayer currentlySelectedPlayer;
+
+        public void ProcessUserInput()
         {
-            newObj = Instantiate(obstaclePref, blocksParent.transform);
+            if (!EventSystem.current.IsPointerOverGameObject())
+            {
+                var offsetVector = new Vector3(0, 0, 1);
+                if (Input.GetMouseButtonDown(0))
+                {
+                    var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                    var coll = Physics2D.OverlapCircle(worldPoint, 0.5f, LayerMask.GetMask("PlayerFlags"));
+
+                    if (coll)
+                    {
+                        if (currentlySelectedPlayer != null)
+                        {
+                            currentlySelectedPlayer.GetComponent<SpriteRenderer>().color = Color.white;
+                        }
+                        currentlySelectedPlayer = coll.GetComponent<BattlePlayer>();
+                        currentlySelectedPlayer.GetComponent<SpriteRenderer>().color = Color.green;
+                    }
+                    else
+                    {
+                        if (currentlySelectedPlayer != null)
+                        {
+                            currentlySelectedPlayer.GetComponent<SpriteRenderer>().color = Color.white;
+                        }
+                        currentlySelectedPlayer = null;
+                    }
+                }
+                if (battleStarted)
+                {
+                    if (Input.GetMouseButton(0) && currentlySelectedPlayer != null)
+                    {
+                        var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+                        currentlySelectedPlayer.transform.position = (Vector2)worldPoint;
+                    }
+                }
+            }
         }
-        var scrpt = newObj.GetComponent<BlockController>();
-        scrpt.transform.position = pos;
 
-        return scrpt;
+        #endregion UI related methods
+
+        private void InitializeMap()
+        {
+            Debug.Log("Initializing sim");
+            blocksParent = new GameObject("blocksParent");
+            warriorsParent = new GameObject("warriorsParent");
+            projectilesParent = new GameObject("projectilesParent");
+            playersParent = new GameObject("playersParent");
+
+            CreateNewMap(StartBattleSettings.singleton.width, StartBattleSettings.singleton.height);
+        }
+
+        private void InitPlayers()
+        {
+            var nets = StartBattleSettings.singleton.DecodeAllGenomes();
+            AddPlayer(1, new Vector2(2, 2), nets[0]);
+            AddPlayer(2, new Vector2(StartBattleSettings.singleton.width - 3, StartBattleSettings.singleton.height - 3), nets[1]);
+        }
+
+        public void CreateNewMap(int width, int height)
+        {
+            random = new System.Random();
+            //generate map
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    var bl = CreateNewBlock(new Vector2(i, j), (i == 0 || i == width - 1 || j == 0 || j == height - 1) ? false : true);
+                }
+            }
+            Debug.Log("Map created");
+        }
+
+        #region Create game object methods
+
+        private void AddPlayer(int team, Vector2 pos, List<IBlackBox> nets)
+        {
+            var pl = Instantiate(playerPref, playersParent.transform);
+            var scrpt = pl.GetComponent<BattlePlayer>();
+
+            scrpt.Initialize(pos, team, nets);
+        }
+
+        private BlockController CreateNewBlock(Vector2 pos, bool empty)
+        {
+            GameObject newObj;
+            if (empty)
+            {
+                newObj = Instantiate(tilePref, blocksParent.transform);
+            }
+            else
+            {
+                newObj = Instantiate(obstaclePref, blocksParent.transform);
+            }
+            var scrpt = newObj.GetComponent<BlockController>();
+            scrpt.transform.position = pos;
+
+            return scrpt;
+        }
+
+        private WarriorController CreateNewWarrior(Vector2 pos, StructureOfWarrior str, int team, NeuralAI ai, BattlePlayer pla)
+        {
+            var newObj = Instantiate(warrPref, warriorsParent.transform);
+
+            var scrpt = newObj.GetComponent<WarriorController>();
+            scrpt.Initialize(pos, str, team, ai, pla);
+
+            return scrpt;
+        }
+
+        public ProjectileController CreateNewProjectile(Vector2 start, Vector2 direction, float damage, WarriorController shooter)
+        {
+            var newObj = Instantiate(projectilePref, projectilesParent.transform);
+
+            var scrpt = newObj.GetComponent<ProjectileController>();
+            scrpt.Initialize(start, direction, damage, shooter);
+
+            return scrpt;
+        }
+
+        #endregion Create game object methods
     }
-
-    private WarriorController CreateNewWarrior(Vector2 pos, StructureOfWarrior str, int team, NeuralAI ai, BattlePlayer pla)
-    {
-        var newObj = Instantiate(warrPref, warriorsParent.transform);
-
-        var scrpt = newObj.GetComponent<WarriorController>();
-        //scrpt.Initialize(pos, str, team, ai, pla);
-
-        return scrpt;
-    }
-
-    public ProjectileController CreateNewProjectile(Vector2 start, Vector2 direction, float damage, WarriorController shooter)
-    {
-        var newObj = Instantiate(projectilePref, projectilesParent.transform);
-
-        var scrpt = newObj.GetComponent<ProjectileController>();
-        scrpt.Initialize(start, direction, damage, shooter);
-
-        return scrpt;
-    }
-    #endregion
 }

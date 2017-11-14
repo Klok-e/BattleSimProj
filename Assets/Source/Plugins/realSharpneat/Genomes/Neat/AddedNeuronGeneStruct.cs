@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -19,16 +19,16 @@ namespace SharpNeat.Genomes.Neat
     /// connection between two neurons is discarded and replaced with the new neuron and two new connections,
     /// one connection between the source neuron and the new neuron and another from the new neuron to the target neuron.
     /// This struct represents those three IDs.
-    /// 
-    /// This struct exists to represent newly added structure in a history buffer of added structures. This allows us to 
-    /// re-use IDs where a mutation recreates a structure that has previously occurred through previous mutations on other 
+    ///
+    /// This struct exists to represent newly added structure in a history buffer of added structures. This allows us to
+    /// re-use IDs where a mutation recreates a structure that has previously occurred through previous mutations on other
     /// genomes.
     /// </summary>
     public struct AddedNeuronGeneStruct
     {
-        readonly uint _addedNeuronId;
-        readonly uint _addedInputConnectionId;
-        readonly uint _addedOutputConnectionId;
+        private readonly uint _addedNeuronId;
+        private readonly uint _addedInputConnectionId;
+        private readonly uint _addedOutputConnectionId;
 
         #region Constructor
 
@@ -42,10 +42,10 @@ namespace SharpNeat.Genomes.Neat
             _addedOutputConnectionId = idGenerator.NextId;
         }
 
-        #endregion
+        #endregion Constructor
 
         #region Properties
-        
+
         /// <summary>
         /// Gets the added neuron's ID.
         /// </summary>
@@ -70,6 +70,6 @@ namespace SharpNeat.Genomes.Neat
             get { return _addedOutputConnectionId; }
         }
 
-        #endregion
-    }                   
+        #endregion Properties
+    }
 }

@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -14,20 +14,20 @@ namespace SharpNeat.Genomes.Neat
 {
     /// <summary>
     /// Each instance of ConnectionMutationInfo describes a type of mutation and associated parameters.
-    /// 
+    ///
     /// A list of ConnectionMutationInfo objects describe a connection weight mutation scheme - a set
     /// of a number of different types of mutation along with the probability of each type occurring
     /// when spawning offspring genomes asexually.
     /// </summary>
     public class ConnectionMutationInfo
     {
-        readonly double _activationProbability;
-        readonly ConnectionPerturbanceType _perturbanceType;
-        readonly ConnectionSelectionType _selectionType;
-        readonly double _selectionProportion;
-        readonly int _selectionQuantity;
-        readonly double _perturbanceMagnitude;
-        readonly double _sigma;
+        private readonly double _activationProbability;
+        private readonly ConnectionPerturbanceType _perturbanceType;
+        private readonly ConnectionSelectionType _selectionType;
+        private readonly double _selectionProportion;
+        private readonly int _selectionQuantity;
+        private readonly double _perturbanceMagnitude;
+        private readonly double _sigma;
 
         #region Constructors
 
@@ -39,11 +39,11 @@ namespace SharpNeat.Genomes.Neat
         /// <param name="selectionType">The type of connection subset selection the info object represents.</param>
         /// <param name="selectionProportion">For ConnectionSelectionType.Proportional this gives the proportion of connections to select.</param>
         /// <param name="selectionQuantity">For ConnectionSelectionType.FixedQuantity this gives the number of connections to select.</param>
-        /// <param name="perturbanceMagnitude">For ConnectionPerturbanceType.JiggleEven this gives the magnitude of the extents of the 
+        /// <param name="perturbanceMagnitude">For ConnectionPerturbanceType.JiggleEven this gives the magnitude of the extents of the
         /// even distribution used for generating jiggle weight deltas.</param>
         /// <param name="sigma">For ConnectionPerturbanceType.JiggleGaussian this specifies the sigma to use for
         /// the Gaussian distribution used for generating jiggle weight deltas.</param>
-        public ConnectionMutationInfo(double activationProbability, 
+        public ConnectionMutationInfo(double activationProbability,
                                       ConnectionPerturbanceType perturbanceType,
                                       ConnectionSelectionType selectionType,
                                       double selectionProportion,
@@ -71,10 +71,10 @@ namespace SharpNeat.Genomes.Neat
             _selectionProportion = copyFrom._selectionProportion;
             _selectionQuantity = copyFrom._selectionQuantity;
             _perturbanceMagnitude = copyFrom._perturbanceMagnitude;
-            _sigma = copyFrom._sigma;       
+            _sigma = copyFrom._sigma;
         }
 
-        #endregion
+        #endregion Constructors
 
         #region Properties
 
@@ -109,7 +109,7 @@ namespace SharpNeat.Genomes.Neat
         {
             get { return _selectionProportion; }
         }
-        
+
         /// <summary>
         /// Gets the number of connections to select; for ConnectionSelectionType.FixedQuantity.
         /// </summary>
@@ -134,6 +134,6 @@ namespace SharpNeat.Genomes.Neat
             get { return _sigma; }
         }
 
-        #endregion
+        #endregion Properties
     }
 }

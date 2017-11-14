@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -10,31 +10,31 @@
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
 
+using SharpNeat.Network;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using SharpNeat.Network;
 
 namespace SharpNeat.Genomes.Neat
 {
-    // ENHANCEMENT: Consider switching to a SortedList[K,V] - which guarantees item sort order at all times. 
+    // ENHANCEMENT: Consider switching to a SortedList[K,V] - which guarantees item sort order at all times.
 
     /// <summary>
     /// Represents a sorted list of ConnectionGene objects. The sorting of the items is done on request
     /// rather than being strictly enforced at all times (e.g. as part of adding and removing genes). This
     /// approach is currently more convenient for use in some of the routines that work with NEAT genomes.
-    /// 
-    /// Because we are not using a strictly sorted list such as the generic class SortedList[K,V] a customised 
+    ///
+    /// Because we are not using a strictly sorted list such as the generic class SortedList[K,V] a customised
     /// BinarySearch() method is provided for fast lookup of items if the list is known to be sorted. If the list is
-    /// not sorted then the BinarySearch method's behaviour is undefined. This is potentially a source of bugs 
-    /// and thus this class should probably migrate to SortedList[K,V] or be modified to ensure items are sorted 
+    /// not sorted then the BinarySearch method's behaviour is undefined. This is potentially a source of bugs
+    /// and thus this class should probably migrate to SortedList[K,V] or be modified to ensure items are sorted
     /// prior to a binary search.
-    /// 
+    ///
     /// Sort order is with respect to connection gene innovation ID.
     /// </summary>
     public class ConnectionGeneList : List<ConnectionGene>, IConnectionList
     {
-        static readonly ConnectionGeneComparer __connectionGeneComparer = new ConnectionGeneComparer();
+        private static readonly ConnectionGeneComparer __connectionGeneComparer = new ConnectionGeneComparer();
 
         #region Constructors
 
@@ -60,14 +60,15 @@ namespace SharpNeat.Genomes.Neat
         /// </summary>
         public ConnectionGeneList(ICollection<ConnectionGene> copyFrom) : base(copyFrom.Count + 2)
         {
-            // ENHANCEMENT: List.Foreach() is potentially faster then a foreach loop. 
+            // ENHANCEMENT: List.Foreach() is potentially faster then a foreach loop.
             // http://diditwith.net/2006/10/05/PerformanceOfForeachVsListForEach.aspx
-            foreach(ConnectionGene srcGene in copyFrom) {
+            foreach (ConnectionGene srcGene in copyFrom)
+            {
                 Add(srcGene.CreateCopy());
             }
         }
 
-        #endregion
+        #endregion Constructors
 
         #region Public Methods
 
@@ -79,18 +80,18 @@ namespace SharpNeat.Genomes.Neat
         /// </summary>
         public void InsertIntoPosition(ConnectionGene connectionGene)
         {
-            // Determine the insert idx with a linear search, starting from the end 
+            // Determine the insert idx with a linear search, starting from the end
             // since mostly we expect to be adding genes that belong only 1 or 2 genes
             // from the end at most.
-            int idx=Count-1;
-            for(; idx > -1; idx--)
+            int idx = Count - 1;
+            for (; idx > -1; idx--)
             {
-                if(this[idx].InnovationId < connectionGene.InnovationId)
+                if (this[idx].InnovationId < connectionGene.InnovationId)
                 {   // Insert idx found.
                     break;
                 }
             }
-            Insert(idx+1, connectionGene);
+            Insert(idx + 1, connectionGene);
         }
 
         /// <summary>
@@ -99,9 +100,10 @@ namespace SharpNeat.Genomes.Neat
         public void Remove(uint innovationId)
         {
             int idx = BinarySearch(innovationId);
-            if(idx<0) {
+            if (idx < 0)
+            {
                 throw new ApplicationException("Attempt to remove connection with an unknown innovationId");
-            } 
+            }
             RemoveAt(idx);
         }
 
@@ -118,22 +120,27 @@ namespace SharpNeat.Genomes.Neat
         /// Binary search is fast and can be performed so long as we know the genes are sorted by innovation ID.
         /// If the genes are not sorted then the behaviour of this method is undefined.
         /// </summary>
-        public int BinarySearch(uint innovationId) 
-        {            
+        public int BinarySearch(uint innovationId)
+        {
             int lo = 0;
-            int hi = Count-1;
+            int hi = Count - 1;
 
-            while (lo <= hi) 
+            while (lo <= hi)
             {
                 int i = (lo + hi) >> 1;
 
                 // Note. we don't calculate this[i].InnovationId-innovationId because we are dealing with uint.
                 // ENHANCEMENT: List<T>[i] invokes a bounds check on each call. Can we avoid this?
-                if(this[i].InnovationId < innovationId) {
+                if (this[i].InnovationId < innovationId)
+                {
                     lo = i + 1;
-                } else if(this[i].InnovationId > innovationId) {
+                }
+                else if (this[i].InnovationId > innovationId)
+                {
                     hi = i - 1;
-                } else {
+                }
+                else
+                {
                     return i;
                 }
             }
@@ -147,7 +154,8 @@ namespace SharpNeat.Genomes.Neat
         public void ResetIsMutatedFlags()
         {
             int count = this.Count;
-            for(int i=0; i<count; i++) {
+            for (int i = 0; i < count; i++)
+            {
                 this[i].IsMutated = false;
             }
         }
@@ -159,21 +167,23 @@ namespace SharpNeat.Genomes.Neat
         public bool IsSorted()
         {
             int count = this.Count;
-            if(0 == count) {
+            if (0 == count)
+            {
                 return true;
             }
 
             uint prev = this[0].InnovationId;
-            for(int i=1; i<count; i++)
+            for (int i = 1; i < count; i++)
             {
-                if(this[i].InnovationId <= prev) {
+                if (this[i].InnovationId <= prev)
+                {
                     return false;
                 }
             }
             return true;
         }
 
-        #endregion
+        #endregion Public Methods
 
         #region IConnectionList Members
 
@@ -189,7 +199,8 @@ namespace SharpNeat.Genomes.Neat
 
         IEnumerator<INetworkConnection> IEnumerable<INetworkConnection>.GetEnumerator()
         {
-            foreach(ConnectionGene gene in this) {
+            foreach (ConnectionGene gene in this)
+            {
                 yield return gene;
             }
         }
@@ -199,6 +210,6 @@ namespace SharpNeat.Genomes.Neat
             return ((IEnumerable<INetworkConnection>)this).GetEnumerator();
         }
 
-        #endregion
+        #endregion IConnectionList Members
     }
 }

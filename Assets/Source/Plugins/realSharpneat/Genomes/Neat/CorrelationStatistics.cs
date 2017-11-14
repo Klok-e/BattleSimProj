@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -17,10 +17,10 @@ namespace SharpNeat.Genomes.Neat
     /// </summary>
     public class CorrelationStatistics
     {
-        int _matchingGeneCount;
-        int _disjointConnectionGeneCount;
-        int _excessConnectionGeneCount;
-        double _connectionWeightDelta;
+        private int _matchingGeneCount;
+        private int _disjointConnectionGeneCount;
+        private int _excessConnectionGeneCount;
+        private double _connectionWeightDelta;
 
         #region Properties
 
@@ -60,6 +60,6 @@ namespace SharpNeat.Genomes.Neat
             set { _connectionWeightDelta = value; }
         }
 
-        #endregion
+        #endregion Properties
     }
 }

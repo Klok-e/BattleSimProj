@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,6 +9,7 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -16,37 +17,38 @@ using System.Threading.Tasks;
 namespace SharpNeat.Core
 {
     /// <summary>
-    /// A concrete implementation of IGenomeListEvaluator that evaluates genomes independently of each 
+    /// A concrete implementation of IGenomeListEvaluator that evaluates genomes independently of each
     /// other and in parallel (on multiple execution threads).
-    /// 
+    ///
     /// Genome decoding is performed by a provided IGenomeDecoder.
     /// Phenome evaluation is performed by a provided IPhenomeEvaluator.
     /// </summary>
-    public class ParallelGenomeListEvaluator<TGenome,TPhenome> : IGenomeListEvaluator<TGenome>
+    public class ParallelGenomeListEvaluator<TGenome, TPhenome> : IGenomeListEvaluator<TGenome>
         where TGenome : class, IGenome<TGenome>
         where TPhenome : class
     {
-        readonly IGenomeDecoder<TGenome,TPhenome> _genomeDecoder;
+        private readonly IGenomeDecoder<TGenome, TPhenome> _genomeDecoder;
 
         // TODO: If we create N evaluators (one per thread) then the evaluators can have persistent state, which may allow faster execution (i.e. re-use of allocated memory).
-        readonly IPhenomeEvaluator<TPhenome> _phenomeEvaluator;
-        readonly ParallelOptions _parallelOptions;
-        readonly bool _enablePhenomeCaching;
-        readonly EvaluationMethod _evalMethod;
+        private readonly IPhenomeEvaluator<TPhenome> _phenomeEvaluator;
 
-        delegate void EvaluationMethod(IList<TGenome> genomeList);
+        private readonly ParallelOptions _parallelOptions;
+        private readonly bool _enablePhenomeCaching;
+        private readonly EvaluationMethod _evalMethod;
+
+        private delegate void EvaluationMethod(IList<TGenome> genomeList);
 
         #region Constructors
 
         /// <summary>
-        /// Construct with the provided IGenomeDecoder and IPhenomeEvaluator. 
+        /// Construct with the provided IGenomeDecoder and IPhenomeEvaluator.
         /// Phenome caching is enabled by default.
         /// The number of parallel threads defaults to Environment.ProcessorCount.
         /// </summary>
-        public ParallelGenomeListEvaluator(IGenomeDecoder<TGenome,TPhenome> genomeDecoder,
+        public ParallelGenomeListEvaluator(IGenomeDecoder<TGenome, TPhenome> genomeDecoder,
                                            IPhenomeEvaluator<TPhenome> phenomeEvaluator)
             : this(genomeDecoder, phenomeEvaluator, new ParallelOptions(), true)
-        { 
+        {
         }
 
         /// <summary>
@@ -54,17 +56,17 @@ namespace SharpNeat.Core
         /// Phenome caching is enabled by default.
         /// The number of parallel threads defaults to Environment.ProcessorCount.
         /// </summary>
-        public ParallelGenomeListEvaluator(IGenomeDecoder<TGenome,TPhenome> genomeDecoder,
+        public ParallelGenomeListEvaluator(IGenomeDecoder<TGenome, TPhenome> genomeDecoder,
                                            IPhenomeEvaluator<TPhenome> phenomeEvaluator,
                                            ParallelOptions options)
             : this(genomeDecoder, phenomeEvaluator, options, true)
-        { 
+        {
         }
 
         /// <summary>
         /// Construct with the provided IGenomeDecoder, IPhenomeEvaluator, ParalleOptions and enablePhenomeCaching flag.
         /// </summary>
-        public ParallelGenomeListEvaluator(IGenomeDecoder<TGenome,TPhenome> genomeDecoder,
+        public ParallelGenomeListEvaluator(IGenomeDecoder<TGenome, TPhenome> genomeDecoder,
                                            IPhenomeEvaluator<TPhenome> phenomeEvaluator,
                                            ParallelOptions options,
                                            bool enablePhenomeCaching)
@@ -75,14 +77,17 @@ namespace SharpNeat.Core
             _enablePhenomeCaching = enablePhenomeCaching;
 
             // Determine the appropriate evaluation method.
-            if(_enablePhenomeCaching) {
+            if (_enablePhenomeCaching)
+            {
                 _evalMethod = Evaluate_Caching;
-            } else {
+            }
+            else
+            {
                 _evalMethod = Evaluate_NonCaching;
             }
         }
 
-        #endregion
+        #endregion Constructors
 
         #region IGenomeListEvaluator<TGenome> Members
 
@@ -121,7 +126,7 @@ namespace SharpNeat.Core
             _evalMethod(genomeList);
         }
 
-        #endregion
+        #endregion IGenomeListEvaluator<TGenome> Members
 
         #region Private Methods
 
@@ -130,16 +135,16 @@ namespace SharpNeat.Core
         /// </summary>
         private void Evaluate_NonCaching(IList<TGenome> genomeList)
         {
-            Parallel.ForEach(genomeList, _parallelOptions, delegate(TGenome genome)
+            Parallel.ForEach(genomeList, _parallelOptions, delegate (TGenome genome)
             {
                 TPhenome phenome = _genomeDecoder.Decode(genome);
-                if(null == phenome)
+                if (null == phenome)
                 {   // Non-viable genome.
                     genome.EvaluationInfo.SetFitness(0.0);
                     genome.EvaluationInfo.AuxFitnessArr = null;
                 }
                 else
-                {   
+                {
                     FitnessInfo fitnessInfo = _phenomeEvaluator.Evaluate(phenome);
                     genome.EvaluationInfo.SetFitness(fitnessInfo._fitness);
                     genome.EvaluationInfo.AuxFitnessArr = fitnessInfo._auxFitnessArr;
@@ -153,22 +158,22 @@ namespace SharpNeat.Core
         /// </summary>
         private void Evaluate_Caching(IList<TGenome> genomeList)
         {
-            Parallel.ForEach(genomeList, _parallelOptions, delegate(TGenome genome)
+            Parallel.ForEach(genomeList, _parallelOptions, delegate (TGenome genome)
             {
                 TPhenome phenome = (TPhenome)genome.CachedPhenome;
-                if(null == phenome) 
+                if (null == phenome)
                 {   // Decode the phenome and store a ref against the genome.
                     phenome = _genomeDecoder.Decode(genome);
                     genome.CachedPhenome = phenome;
                 }
 
-                if(null == phenome)
+                if (null == phenome)
                 {   // Non-viable genome.
                     genome.EvaluationInfo.SetFitness(0.0);
                     genome.EvaluationInfo.AuxFitnessArr = null;
                 }
                 else
-                {   
+                {
                     FitnessInfo fitnessInfo = _phenomeEvaluator.Evaluate(phenome);
                     genome.EvaluationInfo.SetFitness(fitnessInfo._fitness);
                     genome.EvaluationInfo.AuxFitnessArr = fitnessInfo._auxFitnessArr;
@@ -181,6 +186,6 @@ namespace SharpNeat.Core
             throw new System.NotImplementedException();
         }
 
-        #endregion
+        #endregion Private Methods
     }
 }

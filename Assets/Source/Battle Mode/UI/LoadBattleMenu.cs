@@ -1,49 +1,47 @@
-﻿using UnityEngine;
-using System.Collections;
-using UnityEngine.UI;
+﻿using SharpNeat.Phenomes;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
 
-public class LoadBattleMenu : MonoBehaviour
+namespace BattleMode
 {
-    [SerializeField] Canvas canvasMain;
-    [SerializeField] Canvas canvasSaveLoad;
-
-    [SerializeField] Transform menuPanel;
-    [SerializeField] GameObject buttonPrefab;
-    List<string> savesList;
-
-    bool indexOfPl;
-    public void SetIndexOfPl(bool ind)
+    public class LoadBattleMenu : MonoBehaviour
     {
-        indexOfPl = ind;
-    }
+        [SerializeField] private GameObject toEnableAfterPress;
+        [SerializeField] private GameObject thisAt;
 
-    public void Refresh()
-    {
-        foreach (Transform item in menuPanel.transform)
+        [SerializeField] private Transform menuPanel;
+        [SerializeField] private GameObject buttonPrefab;
+        private List<string> savesList;
+
+        public void Refresh()
         {
-            Destroy(item.gameObject);
+            foreach (Transform item in menuPanel.transform)
+            {
+                Destroy(item.gameObject);
+            }
+
+            savesList = SaveLoad.savedGames;
+            for (int i = 0; i < savesList.Count; i++)
+            {
+                GameObject goButton = (GameObject)Instantiate(buttonPrefab);
+                goButton.transform.SetParent(menuPanel, false);
+                goButton.transform.localScale = new Vector3(1, 1, 1);
+
+                Button tempButton = goButton.GetComponent<Button>();
+                tempButton.GetComponentInChildren<Text>().text = savesList[i];
+                int tempInt = i;
+
+                tempButton.onClick.AddListener(() => LoadSavePathToStartBattleSettings(tempInt));
+            }
         }
 
-        savesList = SaveLoad.savedGames;
-        for (int i = 0; i < savesList.Count; i++)
+        private void LoadSavePathToStartBattleSettings(int index)
         {
-            GameObject goButton = (GameObject)Instantiate(buttonPrefab);
-            goButton.transform.SetParent(menuPanel, false);
-            goButton.transform.localScale = new Vector3(1, 1, 1);
-
-            Button tempButton = goButton.GetComponent<Button>();
-            tempButton.GetComponentInChildren<Text>().text = savesList[i];
-            int tempInt = i;
-
-            tempButton.onClick.AddListener(() => LoadSave(tempInt));
+            Debug.Log("Loading save...");
+            StartBattleSettings.singleton.AddNets(savesList[index]);
+            toEnableAfterPress.gameObject.SetActive(true);
+            thisAt.gameObject.SetActive(false);
         }
-    }
-    void LoadSave(int index)
-    {
-        Debug.Log("Loading save...");
-        BattleManager.battleManagerInst.LoadGenomesToPlIndex(savesList[index], indexOfPl ? 0 : 1);
-        canvasMain.gameObject.SetActive(true);
-        canvasSaveLoad.gameObject.SetActive(false);
     }
 }

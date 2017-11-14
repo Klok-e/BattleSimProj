@@ -1,13 +1,14 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using System.Threading;
-using System;
-using SharpNeat.Core;
+﻿using SharpNeat.Genomes.Neat;
 using SharpNeat.Phenomes;
-using SharpNeat.Genomes.Neat;
-using UnityEngine.UI;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using UnityEngine;
+using UnityEngine.UI;
+using Warrior;
+
 namespace SimEditor
 {
     public class SimController : MonoBehaviour
@@ -23,14 +24,14 @@ namespace SimEditor
         [HideInInspector] public GameObject projectilesParent;
         [HideInInspector] public GameObject playersParent;
 
-        WarriorController[] warriors;//cached for performance
+        private WarriorController[] warriors;//cached for performance
 
-        System.Random random;
+        private System.Random random;
 
-        int warriorsTotal;
+        private int warriorsTotal;
 
-        [HideInInspector] public int height;
-        [HideInInspector] public int width;
+        public int height;
+        public int width;
 
         private int playerAmount;
 
@@ -48,13 +49,13 @@ namespace SimEditor
 
         //Assets.Source.BattleExperiment experiment;
         // Use this for initialization
-        void Start()
+        private void Start()
         {
             Debug.Log("Main thread is " + Thread.CurrentThread.ManagedThreadId);
             Debug.Assert(warriorsTotal % 2 == 0);
         }
 
-        void Update()
+        private void Update()
         {
             ProcessUserInput();
         }
@@ -82,7 +83,6 @@ namespace SimEditor
             }
         }
 
-
         public void AddPlayer(int team, int amoutOfWarriorsOwns, bool freeze)
         {
             var pl = Instantiate(playerPref, playersParent.transform);
@@ -99,8 +99,8 @@ namespace SimEditor
             coEvaluator = new CoEvaluator(playerAmount);
         }
 
+        [HideInInspector] public bool userWantsToRun;
 
-        public bool userWantsToRun;
         public IEnumerator StartPerformingGenerations()
         {
             Debug.Assert(!userWantsToRun);
@@ -134,7 +134,8 @@ namespace SimEditor
             }
         }
 
-        float timeScaleEvaluation = 1;
+        private float timeScaleEvaluation = 1;
+
         public void SetTimeScaleEvaluation(float toSet)
         {
             timeScaleEvaluation = toSet;
@@ -166,13 +167,13 @@ namespace SimEditor
         }
 
         #region Methods for evaluating
+
         //bool mutualEvalCoroutineStarted;
 
         /*
         public IEnumerator StartEvaluationOfPlayersGenomes(List<NeatGenome> genomesList, PlayerController playerSubmitter)
         {
             mutualEvalCoroutineStarted = false;
-
 
             for (int i = 0; ; i++)
             {
@@ -199,10 +200,10 @@ namespace SimEditor
             }
         }*/
 
+        private int evaluationCount = 0;
+        [HideInInspector] public bool mutualEvaluatingFlag;
 
-        int evaluationCount = 0;
-        public bool mutualEvaluatingFlag;
-        IEnumerator MutualEvaluation()
+        private IEnumerator MutualEvaluation()
         {
             Debug.Assert(mutualEvaluatingFlag == false);//can't start if already started
             mutualEvaluatingFlag = true;
@@ -210,7 +211,6 @@ namespace SimEditor
             foreach (var playerNets in coEvaluator.playerNetsDict)
             {
                 SpawnWarriorsAndAssignBoxes(
-                    playerNets.Key.transform.position,
                     playerNets.Value.Keys.ToList(),
                     playerNets.Key,
                     playerNets.Key.AmoutOfWarriorsOwns,
@@ -234,6 +234,7 @@ namespace SimEditor
         }
 
         #region Small helper functions
+
         private void AssignEvaluatedFitnessesToGenomes()
         {
             Dictionary<IBlackBox, NeatGenome> merged = new Dictionary<IBlackBox, NeatGenome>();
@@ -243,7 +244,7 @@ namespace SimEditor
             }
             foreach (var warrior in warriors)
             {
-                merged[warrior.ai.network].EvaluationInfo.SetFitness(Math.Max(warrior.Fitness, 0));
+                merged[warrior.ai.network].EvaluationInfo.SetFitness(Math.Max(warrior.GetFitness(), 0));
             }
             DestroyWarriors();
         }
@@ -258,52 +259,86 @@ namespace SimEditor
 
         private void ResetWarriorsToTheirDefaults()
         {
+            var dict = new Dictionary<APlayerController, float[]>();
             foreach (var warrior in warriors)
             {
-                warrior.Revive();
+                if (!dict.ContainsKey(warrior.PlayerOwner))
+                {
+                    dict.Add(warrior.PlayerOwner, new float[3] { 0, 1, 1 });//0 - shiftFromCenter, 1 - countShiftIsIncreasedMax, 2 - count
+                }
+                if (dict[warrior.PlayerOwner][2] <= 0)
+                {
+                    dict[warrior.PlayerOwner][0] += warrior.GetComponent<CircleCollider2D>().radius;
+                    dict[warrior.PlayerOwner][1] *= 3;
+                    dict[warrior.PlayerOwner][2] = dict[warrior.PlayerOwner][1];
+                }
+                var pos = warrior.PlayerOwner.transform.position + (Vector3)Helpers.RandomVector2() * dict[warrior.PlayerOwner][0];
+                warrior.Revive(pos);
+                dict[warrior.PlayerOwner][2]--;
             }
         }
 
-        private void SpawnWarriorsAndAssignBoxes(Vector2 pos, IList<IBlackBox> boxes, PlayerController pla, int amount, int team)
+        private void SpawnWarriorsAndAssignBoxes(IList<IBlackBox> boxes, PlayerController pla, int amount, int team)
         {
             Debug.Assert(boxes.Count == amount);
             Debug.Assert(team >= 1);
+
             for (int i = 0; i < amount; i++)
             {
-                var w = CreateNewWarrior(pos, defaultWarStrct, team, new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random, boxes[i]), pla);
+                var w = CreateNewWarrior(
+                    pla.transform.position,
+                    defaultWarStrct,
+                    team,
+                    new NeuralAI(HelperConstants.totalAmountOfSensors, HelperConstants.totalAmountOfOutputsOfNet, random, boxes[i]), pla);
             }
             warriors = warriorsParent.GetComponentsInChildren<WarriorController>();
         }
-        #endregion
 
-        bool evaluatingFlag;
-        int ticksForEvalMax = HelperConstants.ticksPerEvaluation;
-        int ticksPassedFromStartEval = 0;
+        #endregion Small helper functions
+
+        private bool evaluatingFlag;
+        private int ticksForEvalMax = HelperConstants.ticksPerEvaluation;
+        private int ticksPassedFromStartEval = 0;
+
         private IEnumerator Evaluate()
         {
             Debug.Assert(!evaluatingFlag);//can't start evaluating if already evaluating
             evaluatingFlag = true;
 
-            foreach (var player in playersParent.GetComponentsInChildren<PlayerController>())
-            {
-                StartCoroutine(player.TickTrain());
-            }
+            var plrs = playersParent.GetComponentsInChildren<PlayerController>();
+
+            ResetPlayersToDefault(plrs);
 
             while (ticksPassedFromStartEval < ticksForEvalMax)
             {
-                Tick();
+                Tick(plrs);
                 ticksPassedFromStartEval++;
-                if (ticksPassedFromStartEval % 200 == 0) Debug.Log(ticksPassedFromStartEval + " ticks passed");
                 yield return new WaitForFixedUpdate();
             }
+
+            ResetPlayersToDefault(plrs);
+
             Debug.Log("Evaluation finished");
             ticksPassedFromStartEval = 0;
             evaluatingFlag = false;
         }
 
-        public void Tick()
+        private void ResetPlayersToDefault(PlayerController[] plrs)
+        {
+            foreach (var player in plrs)
+                player.ResetToDefault();
+
+            foreach (var proj in projectilesParent.GetComponentsInChildren<ProjectileController>())
+                proj.Die();
+        }
+
+        public void Tick(PlayerController[] plrs)
         {
             var projectiles = projectilesParent.GetComponentsInChildren<ProjectileController>();
+
+            foreach (var player in plrs)
+                player.Tick();
+
             foreach (var proj in projectiles)
             {
                 proj.Tick();
@@ -320,10 +355,12 @@ namespace SimEditor
                 }
             }
         }
-        #endregion
+
+        #endregion Methods for evaluating
 
         #region Create game object methods
-        private BlockController CreateNewBlock(Vector2 pos, bool empty)
+
+        public BlockController CreateNewBlock(Vector2 pos, bool empty)
         {
             GameObject newObj;
             if (empty)
@@ -340,7 +377,7 @@ namespace SimEditor
             return scrpt;
         }
 
-        private WarriorController CreateNewWarrior(Vector2 pos, StructureOfWarrior str, int team, NeuralAI ai, PlayerController pla)
+        public WarriorController CreateNewWarrior(Vector2 pos, StructureOfWarrior str, int team, NeuralAI ai, PlayerController pla)
         {
             var newObj = Instantiate(warrPref, warriorsParent.transform);
 
@@ -359,29 +396,35 @@ namespace SimEditor
 
             return scrpt;
         }
-        #endregion
+
+        #endregion Create game object methods
 
         //TODO: make another script with all ui functions
         public void SetFitnessBonusForDyingFromEnemy(float num)
         {
             HelperConstants.fitnessBonusForDyingFromEnemy = num;
         }
+
         public void SetFitnessForKillingEnemy(float num)
         {
             HelperConstants.fitnessForKillingAnEnemy = num;
         }
+
         public void SetFitnessMultiplierForApproachingToFlag(float num)
         {
             HelperConstants.fitnessMultiplierForApproachingToFlag = num;
         }
-        public void SetFitnessBonusForBeingNearFlag(float num)
+
+        public void SetFitnessPenaltyForKillingAlly(float num)
         {
-            HelperConstants.fitnessMultiplierForBeingNearFlag = num;
+            HelperConstants.fitnessPenaltyForKillingAlly = num;
         }
 
         #region User input
+
         public Text textToDisplay;
-        WarriorController currentlySelectedWarr;
+        private WarriorController currentlySelectedWarr;
+
         private void ProcessUserInput()
         {
             if (textToDisplay != null)
@@ -401,11 +444,10 @@ namespace SimEditor
                     }
                 }
                 if (currentlySelectedWarr != null)
-                    textToDisplay.text = currentlySelectedWarr.Fitness.ToString();
+                    textToDisplay.text = currentlySelectedWarr.GetFitness().ToString();
             }
         }
 
-
-        #endregion
+        #endregion User input
     }
 }

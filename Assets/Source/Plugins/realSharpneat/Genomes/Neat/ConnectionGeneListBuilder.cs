@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,43 +9,45 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
-using System.Collections.Generic;
+
 using SharpNeat.Network;
+using System.Collections.Generic;
 
 namespace SharpNeat.Genomes.Neat
 {
     /// <summary>
-    /// Used for building a list of connection genes. 
-    /// 
+    /// Used for building a list of connection genes.
+    ///
     /// Connection genes are added one by one to a list and a dictionary of added connection genes is maintained
     /// keyed on ConnectionEndpointsStruct to allow a caller to check if a connection with the same end points
     /// (and potentially a different innovation ID) already exists in the list.
     /// </summary>
     public class ConnectionGeneListBuilder
     {
-        readonly ConnectionGeneList _connectionGeneList;
-        readonly Dictionary<ConnectionEndpointsStruct,ConnectionGene> _connectionGeneDictionary;
-        readonly SortedDictionary<uint,NeuronGene> _neuronDictionary;
-        // Note. connection gene innovation IDs always start above zero as they share the ID space with neurons, 
+        private readonly ConnectionGeneList _connectionGeneList;
+        private readonly Dictionary<ConnectionEndpointsStruct, ConnectionGene> _connectionGeneDictionary;
+        private readonly SortedDictionary<uint, NeuronGene> _neuronDictionary;
+
+        // Note. connection gene innovation IDs always start above zero as they share the ID space with neurons,
         // which always come first (e.g. bias neuron is always ID 0).
-        uint _highestConnectionGeneId = 0; 
+        private uint _highestConnectionGeneId = 0;
 
         #region Constructor
 
         /// <summary>
-        /// Constructs the builder with the provided capacity. The capacity should be chosen 
+        /// Constructs the builder with the provided capacity. The capacity should be chosen
         /// to limit the number of memory re-allocations that occur within the contained
         /// connection list dictionary.
         /// </summary>
         public ConnectionGeneListBuilder(int connectionCapacity)
         {
             _connectionGeneList = new ConnectionGeneList(connectionCapacity);
-            _connectionGeneDictionary = new Dictionary<ConnectionEndpointsStruct,ConnectionGene>(connectionCapacity);
+            _connectionGeneDictionary = new Dictionary<ConnectionEndpointsStruct, ConnectionGene>(connectionCapacity);
             // TODO: Determine better initial capacity.
-            _neuronDictionary = new SortedDictionary<uint,NeuronGene>();
+            _neuronDictionary = new SortedDictionary<uint, NeuronGene>();
         }
 
-        #endregion
+        #endregion Constructor
 
         #region Properties
 
@@ -60,7 +62,7 @@ namespace SharpNeat.Genomes.Neat
         /// <summary>
         /// Gets the builder's dictionary of connection genes keyed on ConnectionEndpointsStruct.
         /// </summary>
-        public Dictionary<ConnectionEndpointsStruct,ConnectionGene> ConnectionGeneDictionary
+        public Dictionary<ConnectionEndpointsStruct, ConnectionGene> ConnectionGeneDictionary
         {
             get { return _connectionGeneDictionary; }
         }
@@ -68,12 +70,12 @@ namespace SharpNeat.Genomes.Neat
         /// <summary>
         /// Gets the builder's dictionary of neuron IDs obtained from contained connection gene endpoints.
         /// </summary>
-        public SortedDictionary<uint,NeuronGene> NeuronDictionary
+        public SortedDictionary<uint, NeuronGene> NeuronDictionary
         {
             get { return _neuronDictionary; }
         }
 
-        #endregion
+        #endregion Properties
 
         #region Public Methods
 
@@ -88,25 +90,28 @@ namespace SharpNeat.Genomes.Neat
         {
             // Check if a matching gene has already been added.
             ConnectionEndpointsStruct connectionKey = new ConnectionEndpointsStruct(connectionGene.SourceNodeId, connectionGene.TargetNodeId);
-            
+
             ConnectionGene existingConnectionGene;
-            if(!_connectionGeneDictionary.TryGetValue(connectionKey, out existingConnectionGene))
+            if (!_connectionGeneDictionary.TryGetValue(connectionKey, out existingConnectionGene))
             {   // Add new connection gene.
                 ConnectionGene connectionGeneCopy = new ConnectionGene(connectionGene);
                 _connectionGeneDictionary.Add(connectionKey, connectionGeneCopy);
 
                 // Insert connection gene into a list. Use more efficient approach (append to end) if we know the gene belongs at the end.
-                if(connectionGeneCopy.InnovationId > _highestConnectionGeneId) {
+                if (connectionGeneCopy.InnovationId > _highestConnectionGeneId)
+                {
                     _connectionGeneList.Add(connectionGeneCopy);
                     _highestConnectionGeneId = connectionGeneCopy.InnovationId;
-                } else {
+                }
+                else
+                {
                     _connectionGeneList.InsertIntoPosition(connectionGeneCopy);
                 }
 
                 // Add neuron genes (if not already added).
                 // Source neuron.
                 NeuronGene srcNeuronGene;
-                if(!_neuronDictionary.TryGetValue(connectionGene.SourceNodeId, out srcNeuronGene))
+                if (!_neuronDictionary.TryGetValue(connectionGene.SourceNodeId, out srcNeuronGene))
                 {
                     srcNeuronGene = parentGenome.NeuronGeneList.GetNeuronById(connectionGene.SourceNodeId);
                     srcNeuronGene = new NeuronGene(srcNeuronGene, false); // Make a copy.
@@ -115,7 +120,7 @@ namespace SharpNeat.Genomes.Neat
 
                 // Target neuron.
                 NeuronGene tgtNeuronGene;
-                if(!_neuronDictionary.TryGetValue(connectionGene.TargetNodeId, out tgtNeuronGene))
+                if (!_neuronDictionary.TryGetValue(connectionGene.TargetNodeId, out tgtNeuronGene))
                 {
                     tgtNeuronGene = parentGenome.NeuronGeneList.GetNeuronById(connectionGene.TargetNodeId);
                     tgtNeuronGene = new NeuronGene(tgtNeuronGene, false); // Make a copy.
@@ -126,7 +131,7 @@ namespace SharpNeat.Genomes.Neat
                 srcNeuronGene.TargetNeurons.Add(tgtNeuronGene.Id);
                 tgtNeuronGene.SourceNeurons.Add(srcNeuronGene.Id);
             }
-            else if(overwriteExisting)
+            else if (overwriteExisting)
             {   // The genome we are building already has a connection with the same neuron endpoints as the one we are
                 // trying to add. It didn't match up during correlation because it has a different innovation number, this
                 // is possible because the innovation history buffers throw away old innovations in a FIFO manner in order
@@ -141,20 +146,22 @@ namespace SharpNeat.Genomes.Neat
         /// <summary>
         /// Tests if adding the specified connection would cause a cyclic pathway in the network connectivity.
         /// Returns true if the connection would form a cycle.
-        /// Note. This same logic is implemented on NeatGenome.IsConnectionCyclic() but against slightly 
+        /// Note. This same logic is implemented on NeatGenome.IsConnectionCyclic() but against slightly
         /// different data structures, hence the method is re-implemented here.
         /// </summary>
         public bool IsConnectionCyclic(uint srcNeuronId, uint tgtNeuronId)
         {
             // Quick test. Is connection connecting a neuron to itself.
-            if(srcNeuronId == tgtNeuronId) {
+            if (srcNeuronId == tgtNeuronId)
+            {
                 return true;
             }
 
             // Quick test. If one of the neuron's is not yet registered with the builder then there can be no cyclic connection
             // (the connection is coming-from or going-to a dead end).
             NeuronGene srcNeuron;
-            if(!_neuronDictionary.TryGetValue(srcNeuronId, out srcNeuron) || !_neuronDictionary.ContainsKey(tgtNeuronId)) {
+            if (!_neuronDictionary.TryGetValue(srcNeuronId, out srcNeuron) || !_neuronDictionary.ContainsKey(tgtNeuronId))
+            {
                 return false;
             }
 
@@ -162,42 +169,46 @@ namespace SharpNeat.Genomes.Neat
             // signals into sourceNeuron already and therefore a new connection between sourceNeuron and targetNeuron
             // would create a cycle.
 
-            // Maintain a set of neurons that have been visited. This allows us to avoid unnecessary re-traversal 
+            // Maintain a set of neurons that have been visited. This allows us to avoid unnecessary re-traversal
             // of the network and detection of cyclic connections.
             HashSet<uint> visitedNeurons = new HashSet<uint>();
             visitedNeurons.Add(srcNeuronId);
 
-            // Search uses an explicitly created stack instead of function recursion, the logic here is that this 
+            // Search uses an explicitly created stack instead of function recursion, the logic here is that this
             // may be more efficient through avoidance of multiple function calls (but not sure).
             Stack<uint> workStack = new Stack<uint>();
 
             // Push source neuron's sources onto the work stack. We could just push the source neuron but we choose
             // to cover that test above to avoid the one extra neuronID lookup that would require.
-            foreach(uint neuronId in srcNeuron.SourceNeurons) {
+            foreach (uint neuronId in srcNeuron.SourceNeurons)
+            {
                 workStack.Push(neuronId);
             }
 
             // While there are neurons to check/traverse.
-            while(0 != workStack.Count)
+            while (0 != workStack.Count)
             {
                 // Pop a neuron to check from the top of the stack, and then check it.
                 uint currNeuronId = workStack.Pop();
-                if(visitedNeurons.Contains(currNeuronId)) {
+                if (visitedNeurons.Contains(currNeuronId))
+                {
                     // Already visited (via a different route).
                     continue;
                 }
 
-                if(currNeuronId == tgtNeuronId) {
+                if (currNeuronId == tgtNeuronId)
+                {
                     // Target neuron already feeds into the source neuron.
                     return true;
                 }
 
                 // Register visit of this node.
-                visitedNeurons.Add(currNeuronId);                
+                visitedNeurons.Add(currNeuronId);
 
                 // Push the current neuron's source neurons onto the work stack.
                 NeuronGene currNeuron = _neuronDictionary[currNeuronId];
-                foreach(uint neuronId in currNeuron.SourceNeurons) {
+                foreach (uint neuronId in currNeuron.SourceNeurons)
+                {
                     workStack.Push(neuronId);
                 }
             }
@@ -206,6 +217,6 @@ namespace SharpNeat.Genomes.Neat
             return false;
         }
 
-        #endregion
+        #endregion Public Methods
     }
 }

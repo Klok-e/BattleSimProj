@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
-
 
 public class CameraController : MonoBehaviour
 {
@@ -11,9 +9,9 @@ public class CameraController : MonoBehaviour
     //private GameController gameControllerInstance;
     private Vector3 offset;
 
-    Camera cameraAttached;
+    private Camera cameraAttached;
 
-    void Start()
+    private void Start()
     {
         cameraInstance = this;
         cameraAttached = GetComponent<Camera>();
@@ -31,4 +29,3 @@ public class CameraController : MonoBehaviour
         transform.Translate(move * cameraAttached.orthographicSize / move_speed);
     }
 }
-

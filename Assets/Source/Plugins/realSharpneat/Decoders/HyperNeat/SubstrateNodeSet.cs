@@ -1,6 +1,6 @@
 ﻿/* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,6 +9,7 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 using System.Collections.Generic;
 
 namespace SharpNeat.Decoders.HyperNeat
@@ -20,7 +21,7 @@ namespace SharpNeat.Decoders.HyperNeat
     /// </summary>
     public class SubstrateNodeSet
     {
-        List<SubstrateNode> _nodePosList;
+        private List<SubstrateNode> _nodePosList;
 
         #region Constructors
 
@@ -48,7 +49,7 @@ namespace SharpNeat.Decoders.HyperNeat
             _nodePosList = nodePosList;
         }
 
-        #endregion
+        #endregion Constructors
 
         #region Properties
 
@@ -60,6 +61,6 @@ namespace SharpNeat.Decoders.HyperNeat
             get { return _nodePosList; }
         }
 
-        #endregion
+        #endregion Properties
     }
 }

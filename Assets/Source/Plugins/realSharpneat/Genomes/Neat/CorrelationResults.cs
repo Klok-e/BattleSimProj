@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -19,8 +19,8 @@ namespace SharpNeat.Genomes.Neat
     /// </summary>
     public class CorrelationResults
     {
-        readonly CorrelationStatistics _correlationStatistics = new CorrelationStatistics();
-        readonly List<CorrelationItem> _correlationItemList;
+        private readonly CorrelationStatistics _correlationStatistics = new CorrelationStatistics();
+        private readonly List<CorrelationItem> _correlationItemList;
 
         #region Constructor
 
@@ -32,7 +32,7 @@ namespace SharpNeat.Genomes.Neat
             _correlationItemList = new List<CorrelationItem>(itemListCapacity);
         }
 
-        #endregion
+        #endregion Constructor
 
         #region Properties
 
@@ -52,7 +52,7 @@ namespace SharpNeat.Genomes.Neat
             get { return _correlationItemList; }
         }
 
-        #endregion
+        #endregion Properties
 
         #region Public Methods
 
@@ -64,43 +64,48 @@ namespace SharpNeat.Genomes.Neat
         {
             long prevInnovationId = -1;
 
-            foreach(CorrelationItem item in _correlationItemList)
+            foreach (CorrelationItem item in _correlationItemList)
             {
-                if(item.CorrelationItemType==CorrelationItemType.Match)
+                if (item.CorrelationItemType == CorrelationItemType.Match)
                 {
-                    if(item.ConnectionGene1==null || item.ConnectionGene2==null) {
+                    if (item.ConnectionGene1 == null || item.ConnectionGene2 == null)
+                    {
                         return false;
                     }
 
-                    if((item.ConnectionGene1.InnovationId != item.ConnectionGene2.InnovationId)
+                    if ((item.ConnectionGene1.InnovationId != item.ConnectionGene2.InnovationId)
                     || (item.ConnectionGene1.SourceNodeId != item.ConnectionGene2.SourceNodeId)
-                    || (item.ConnectionGene1.TargetNodeId != item.ConnectionGene2.TargetNodeId)) {
+                    || (item.ConnectionGene1.TargetNodeId != item.ConnectionGene2.TargetNodeId))
+                    {
                         return false;
                     }
 
                     // Innovation ID's should be in order and not duplicated.
-                    if(item.ConnectionGene1.InnovationId <= prevInnovationId) {
+                    if (item.ConnectionGene1.InnovationId <= prevInnovationId)
+                    {
                         return false;
                     }
                     prevInnovationId = item.ConnectionGene1.InnovationId;
                 }
                 else // Disjoint or excess gene.
                 {
-                    if((item.ConnectionGene1==null && item.ConnectionGene2==null)
-                    || (item.ConnectionGene1!=null && item.ConnectionGene2!=null))
+                    if ((item.ConnectionGene1 == null && item.ConnectionGene2 == null)
+                    || (item.ConnectionGene1 != null && item.ConnectionGene2 != null))
                     {   // Precisely one gene should be present.
                         return false;
                     }
-                    if(item.ConnectionGene1 != null)
+                    if (item.ConnectionGene1 != null)
                     {
-                        if(item.ConnectionGene1.InnovationId <= prevInnovationId) {
+                        if (item.ConnectionGene1.InnovationId <= prevInnovationId)
+                        {
                             return false;
                         }
                         prevInnovationId = item.ConnectionGene1.InnovationId;
                     }
                     else // ConnectionGene2 is present.
                     {
-                        if(item.ConnectionGene2.InnovationId <= prevInnovationId) {
+                        if (item.ConnectionGene2.InnovationId <= prevInnovationId)
+                        {
                             return false;
                         }
                         prevInnovationId = item.ConnectionGene2.InnovationId;
@@ -110,6 +115,6 @@ namespace SharpNeat.Genomes.Neat
             return true;
         }
 
-        #endregion
+        #endregion Public Methods
     }
 }

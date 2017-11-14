@@ -11,11 +11,18 @@ public static class SaveLoad
     public static void Load()
     {
         savedGames.Clear();
-
-        string[] fileEntries = Directory.GetFiles(Application.dataPath + HelperConstants.saveDirectory);
-        foreach (string fileName in fileEntries)
+        string dirPath = Application.dataPath + HelperConstants.saveDirectory;
+        if (Directory.Exists(dirPath))
         {
-            savedGames.Add(Path.GetFileName(fileName));
+            string[] fileEntries = Directory.GetFiles(dirPath);
+            foreach (string fileName in fileEntries)
+            {
+                savedGames.Add(Path.GetFileName(fileName));
+            }
+        }
+        else
+        {
+            Directory.CreateDirectory(dirPath);
         }
     }
 }

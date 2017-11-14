@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,13 +9,14 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 using System.Collections;
 using System.Collections.Generic;
 
 namespace SharpNeat.Core
 {
     /// <summary>
-    /// Generic interface for evaluating a list of genomes. By operating on a list we allow concrete 
+    /// Generic interface for evaluating a list of genomes. By operating on a list we allow concrete
     /// implementations of this interface to choose between evaluating each genome independently of the others,
     /// perhaps across several execution threads, or in some collective evaluation scheme such as an artificial
     /// life/world scenario.
@@ -38,7 +39,7 @@ namespace SharpNeat.Core
         /// <summary>
         /// Evaluates a list of genomes.
         /// </summary>
-        IEnumerator Evaluate(IList<TGenome> genomeList);  
+        IEnumerator Evaluate(IList<TGenome> genomeList);
 
         /// <summary>
         /// Reset the internal state of the evaluation scheme if any exists.

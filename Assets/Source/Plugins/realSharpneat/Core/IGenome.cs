@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,25 +9,26 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 namespace SharpNeat.Core
 {
     /// <summary>
     /// Generic interface for genome classes.
-    /// 
-    /// Concrete IGenome classes are expected to be given a reference to their concrete IGenomeFactory class even 
+    ///
+    /// Concrete IGenome classes are expected to be given a reference to their concrete IGenomeFactory class even
     /// if they are spawned from another IGenome. This allows all genomes to use the same set of parameters
     /// for spawning - which may change during evolution, e.g. in the case of phased searching in NEAT.
     /// </summary>
     public interface IGenome<TGenome>
     {
         /// <summary>
-        /// Gets the genome's unique ID. IDs are unique across all genomes created from a single 
+        /// Gets the genome's unique ID. IDs are unique across all genomes created from a single
         /// IGenomeFactory.
         /// </summary>
         uint Id { get; }
 
         /// <summary>
-        /// Gets or sets a specie index. An implementation of this is required only when using 
+        /// Gets or sets a specie index. An implementation of this is required only when using
         /// evolution algorithms that speciate genomes.
         /// </summary>
         int SpecieIdx { get; set; }
@@ -56,7 +57,7 @@ namespace SharpNeat.Core
 
         /// <summary>
         /// Gets or sets a cached phenome obtained from decoding the genome.
-        /// Genomes are typically decoded to Phenomes for evaluation. This property allows decoders to 
+        /// Genomes are typically decoded to Phenomes for evaluation. This property allows decoders to
         /// cache the phenome in order to avoid decoding on each re-evaluation; However, this is optional.
         /// The phenome in un-typed to prevent the class framework from becoming overly complex.
         /// </summary>
@@ -65,7 +66,7 @@ namespace SharpNeat.Core
         /// <summary>
         /// Asexual reproduction.
         /// </summary>
-        /// <param name="birthGeneration">The current evolution algorithm generation. 
+        /// <param name="birthGeneration">The current evolution algorithm generation.
         /// Assigned to the new genome at its birth generation.</param>
         TGenome CreateOffspring(uint birthGeneration);
 
@@ -73,7 +74,7 @@ namespace SharpNeat.Core
         /// Sexual reproduction.
         /// </summary>
         /// <param name="parent">The other parent genome.</param>
-        /// <param name="birthGeneration">The current evolution algorithm generation. 
+        /// <param name="birthGeneration">The current evolution algorithm generation.
         /// Assigned to the new genome at its birth generation.</param>
         TGenome CreateOffspring(TGenome parent, uint birthGeneration);
     }

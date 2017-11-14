@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,6 +9,7 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 using SharpNeat.Network;
 
 namespace SharpNeat.Genomes.Neat
@@ -18,16 +19,16 @@ namespace SharpNeat.Genomes.Neat
     /// </summary>
     public class ConnectionGene : INetworkConnection
     {
-        uint _innovationId;
-        uint _sourceNodeId;
-        uint _targetNodeId;
-        double _weight;
+        private uint _innovationId;
+        private uint _sourceNodeId;
+        private uint _targetNodeId;
+        private double _weight;
 
         /// <summary>
         /// Used by the connection mutation routine to flag mutated connections so that they aren't
         /// mutated more than once.
         /// </summary>
-        bool _isMutated = false;
+        private bool _isMutated = false;
 
         #region Constructor
 
@@ -53,7 +54,7 @@ namespace SharpNeat.Genomes.Neat
             _weight = weight;
         }
 
-        #endregion
+        #endregion Constructor
 
         #region Properties
 
@@ -104,7 +105,7 @@ namespace SharpNeat.Genomes.Neat
             set { _isMutated = value; }
         }
 
-        #endregion
+        #endregion Properties
 
         #region Public Methods
 
@@ -116,6 +117,6 @@ namespace SharpNeat.Genomes.Neat
             return new ConnectionGene(this);
         }
 
-        #endregion
+        #endregion Public Methods
     }
 }

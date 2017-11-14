@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,11 +9,12 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
+using SharpNeat.Network;
+using SharpNeat.Phenomes.NeuralNets;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using SharpNeat.Network;
-using SharpNeat.Phenomes.NeuralNets;
 
 namespace SharpNeat.Decoders
 {
@@ -33,14 +34,15 @@ namespace SharpNeat.Decoders
             FastConnection[] fastConnectionArray;
             IActivationFunction[] activationFnArray;
             double[][] neuronAuxArgsArray;
-            InternalDecode(networkDef, 
+            InternalDecode(networkDef,
                            activationScheme.RelaxingActivation ? activationScheme.MaxTimesteps : activationScheme.TimestepsPerActivation,
                            out fastConnectionArray, out activationFnArray, out neuronAuxArgsArray);
 
             // Construct neural net.
-            if(activationScheme.RelaxingActivation) {
+            if (activationScheme.RelaxingActivation)
+            {
                 return new FastRelaxingCyclicNetwork(fastConnectionArray,
-                                                     activationFnArray, 
+                                                     activationFnArray,
                                                      neuronAuxArgsArray,
                                                      networkDef.NodeList.Count,
                                                      networkDef.InputNodeCount,
@@ -58,7 +60,7 @@ namespace SharpNeat.Decoders
                                          activationScheme.TimestepsPerActivation);
         }
 
-        #endregion
+        #endregion Public Static Methods
 
         #region Private Static Methods
 
@@ -73,17 +75,17 @@ namespace SharpNeat.Decoders
 
             // TODO: Test/optimize heuristic - this is just back of envelope maths.
             // A rough heuristic to decide if we should sort fastConnectionArray by source neuron index.
-            // The principle here is that each activation loop will be about 2x faster (unconfirmed) if we sort 
+            // The principle here is that each activation loop will be about 2x faster (unconfirmed) if we sort
             // fastConnectionArray, but sorting takes about n*log2(n) operations. Therefore the decision to sort
             // depends on length of fastConnectionArray and _timestepsPerActivation.
             // Another factor here is that small networks will fit into CPU caches and therefore will not appear
-            // to speed up - however the unsorted data will 'scramble' CPU caches more than they otherwise would 
+            // to speed up - however the unsorted data will 'scramble' CPU caches more than they otherwise would
             // have and thus may slow down other threads (so we just keep it simple).
             double len = fastConnectionArray.Length;
             double timesteps = timestepsPerActivation;
-            if((len > 2) && (((len * Math.Log(len,2)) + ((timesteps * len)/2.0)) < (timesteps * len)))
+            if ((len > 2) && (((len * Math.Log(len, 2)) + ((timesteps * len) / 2.0)) < (timesteps * len)))
             {   // Sort fastConnectionArray by source neuron index.
-                Array.Sort(fastConnectionArray, delegate(FastConnection x, FastConnection y)
+                Array.Sort(fastConnectionArray, delegate (FastConnection x, FastConnection y)
                 {   // Use simple/fast diff method.
                     return x._srcNeuronIdx - y._srcNeuronIdx;
                 });
@@ -97,7 +99,8 @@ namespace SharpNeat.Decoders
             activationFnArray = new IActivationFunction[nodeCount];
             neuronAuxArgsArray = new double[nodeCount][];
 
-            for(int i=0; i<nodeCount; i++) {
+            for (int i = 0; i < nodeCount; i++)
+            {
                 activationFnArray[i] = activationFnLibrary.GetFunction(nodeList[i].ActivationFnId);
                 neuronAuxArgsArray[i] = nodeList[i].AuxState;
             }
@@ -119,15 +122,15 @@ namespace SharpNeat.Decoders
             // of a dictionary lookup is near constant O(1). Thus number of operations is approximately = O(2*C*1) + the time
             // required to build the dictionary which is approximately O(N).
             //
-            // Therefore the choice of lookup type is based on which of these two expressions gives the lowest value. 
+            // Therefore the choice of lookup type is based on which of these two expressions gives the lowest value.
             //
             //      Binary search.      LookupOps = 2 * C * Log2(N) * x
             //      Dictionary Search.  LookupOps = (N * y) + (2 * C * z)
             //
             // Where x, y and z are constants that adjust for the relative speeds of the lookup and dictionary building operations.
-            // Note that the actual time required to perform these separate algorithms is actually a far more complex problem, and 
+            // Note that the actual time required to perform these separate algorithms is actually a far more complex problem, and
             // for modern CPUs exact times cannot be calculated because of large memory caches and superscalar architecture that
-            // makes execution times in a real environment effectively non-deterministic. Thus these calculations are a rough 
+            // makes execution times in a real environment effectively non-deterministic. Thus these calculations are a rough
             // guide/heuristic that estimate which algorithm will perform best. The constants can be found experimentally but will
             // tend to vary depending on factors such as CPU and memory architecture, .Net framework version and what other tasks the
             // CPU is currently doing which may affect our utilisation of memory caches.
@@ -139,22 +142,22 @@ namespace SharpNeat.Decoders
 
             FastConnection[] fastConnectionArray = new FastConnection[connectionCount];
 
-            if((2.0 * connectionCount * Math.Log(nodeCount, 2.0)) < ((2.0 * connectionCount) + nodeCount))
+            if ((2.0 * connectionCount * Math.Log(nodeCount, 2.0)) < ((2.0 * connectionCount) + nodeCount))
             {
                 // Binary search requires items to be sorted.
                 Debug.Assert(nodeList.IsSorted());
 
                 // Loop the connections and lookup the neuron IDs for each connection's end points using a binary search
                 // on nGeneList. This is probably the quickest approach for small numbers of lookups.
-                for(int i=0; i<connectionCount; i++)
-                {   
+                for (int i = 0; i < connectionCount; i++)
+                {
                     INetworkConnection conn = connectionList[i];
                     fastConnectionArray[i]._srcNeuronIdx = nodeList.BinarySearch(conn.SourceNodeId);
                     fastConnectionArray[i]._tgtNeuronIdx = nodeList.BinarySearch(conn.TargetNodeId);
                     fastConnectionArray[i]._weight = conn.Weight;
 
                     // Check that the correct neuron indexes were found.
-                    Debug.Assert( 
+                    Debug.Assert(
                            nodeList[fastConnectionArray[i]._srcNeuronIdx].Id == conn.SourceNodeId
                         && nodeList[fastConnectionArray[i]._tgtNeuronIdx].Id == conn.TargetNodeId);
                 }
@@ -162,23 +165,24 @@ namespace SharpNeat.Decoders
             else
             {
                 // Build dictionary of neuron indexes keyed on neuron innovation ID.
-                Dictionary<uint,int> neuronIndexDictionary = new Dictionary<uint,int>(nodeCount);
-                for(int i=0; i<nodeCount; i++) {
+                Dictionary<uint, int> neuronIndexDictionary = new Dictionary<uint, int>(nodeCount);
+                for (int i = 0; i < nodeCount; i++)
+                {
                     // ENHANCEMENT: Check if neuron innovation ID requires further manipulation to make a good hash code.
                     neuronIndexDictionary.Add(nodeList[i].Id, i);
                 }
 
                 // Loop the connections and lookup the neuron IDs for each connection's end points using neuronIndexDictionary.
                 // This is probably the quickest approach for large numbers of lookups.
-                for(int i=0; i<connectionCount; i++)
-                {   
+                for (int i = 0; i < connectionCount; i++)
+                {
                     INetworkConnection conn = connectionList[i];
                     fastConnectionArray[i]._srcNeuronIdx = neuronIndexDictionary[conn.SourceNodeId];
                     fastConnectionArray[i]._tgtNeuronIdx = neuronIndexDictionary[conn.TargetNodeId];
                     fastConnectionArray[i]._weight = conn.Weight;
 
                     // Check that the correct neuron indexes were found.
-                    Debug.Assert( 
+                    Debug.Assert(
                            nodeList[fastConnectionArray[i]._srcNeuronIdx].Id == conn.SourceNodeId
                         && nodeList[fastConnectionArray[i]._tgtNeuronIdx].Id == conn.TargetNodeId);
                 }
@@ -187,6 +191,6 @@ namespace SharpNeat.Decoders
             return fastConnectionArray;
         }
 
-        #endregion
+        #endregion Private Static Methods
     }
 }

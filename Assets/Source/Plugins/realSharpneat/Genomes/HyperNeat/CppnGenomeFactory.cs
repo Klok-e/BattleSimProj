@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -48,7 +48,7 @@ namespace SharpNeat.Genomes.HyperNeat
         public CppnGenomeFactory(int inputNeuronCount, int outputNeuronCount,
                                  IActivationFunctionLibrary activationFnLibrary,
                                  NeatGenomeParameters neatGenomeParams)
-            : base(inputNeuronCount,outputNeuronCount, activationFnLibrary, neatGenomeParams)
+            : base(inputNeuronCount, outputNeuronCount, activationFnLibrary, neatGenomeParams)
         {
         }
 
@@ -63,7 +63,7 @@ namespace SharpNeat.Genomes.HyperNeat
         {
         }
 
-        #endregion
+        #endregion Constructors
 
         #region Public Methods [NeatGenome Specific / CPPN Overrides]
 
@@ -74,26 +74,26 @@ namespace SharpNeat.Genomes.HyperNeat
         public override NeuronGene CreateNeuronGene(uint innovationId, NodeType neuronType)
         {
             int activationFnId;
-            switch(neuronType)
+            switch (neuronType)
             {
                 case NodeType.Bias:
                 case NodeType.Input:
                 case NodeType.Output:
-                {   // Use the ID of the first function. By convention this will be the Linear function but in actual 
-                    // fact bias and input neurons don't use their activation function.
-                    activationFnId = _activationFnLibrary.GetFunctionList()[0].Id;
-                    break;
-                }
+                    {   // Use the ID of the first function. By convention this will be the Linear function but in actual
+                        // fact bias and input neurons don't use their activation function.
+                        activationFnId = _activationFnLibrary.GetFunctionList()[0].Id;
+                        break;
+                    }
                 default:
-                {
-                    activationFnId = _activationFnLibrary.GetRandomFunction(_rng).Id;
-                    break;
-                }
+                    {
+                        activationFnId = _activationFnLibrary.GetRandomFunction(_rng).Id;
+                        break;
+                    }
             }
 
             return new NeuronGene(innovationId, neuronType, activationFnId);
         }
 
-        #endregion
+        #endregion Public Methods [NeatGenome Specific / CPPN Overrides]
     }
 }

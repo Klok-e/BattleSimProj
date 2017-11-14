@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,13 +9,14 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 namespace SharpNeat.EvolutionAlgorithms.ComplexityRegulation
 {
     /// <summary>
-    /// Default complexity regulation strategy. 
-    /// This strategy provides a choice of hard/absolute complexity ceiling or a ceiling relative to the 
+    /// Default complexity regulation strategy.
+    /// This strategy provides a choice of hard/absolute complexity ceiling or a ceiling relative to the
     /// complexity at the end of the most recent simplification phase.
-    /// The strategy transitions from complexifying to simplifying when the ceiling is reached. 
+    /// The strategy transitions from complexifying to simplifying when the ceiling is reached.
     /// Transitioning from simplifying to complexifying occurs when complexity is no longer falling
     /// *and* complexity is below the ceiling. This is determined by tracking a complexity moving average
     /// calculated over the past N generations.
@@ -27,41 +28,41 @@ namespace SharpNeat.EvolutionAlgorithms.ComplexityRegulation
         /// <summary>
         /// The minimum number of generations we stay within simplification mode.
         /// </summary>
-        const int MinSimplifcationGenerations = 10;
+        private const int MinSimplifcationGenerations = 10;
 
-        #endregion
+        #endregion Consts
 
         #region Instance Fields
 
         /// <summary>
         /// The ceiling type - absolute or relative.
         /// </summary>
-        ComplexityCeilingType _ceilingType;
+        private ComplexityCeilingType _ceilingType;
 
         /// <summary>
         /// The ceiling value passed into the constructor. Allows the true ceiling to be calculated
         /// if the ceiling type is relative.
         /// </summary>
-        double _complexityCeiling;
+        private double _complexityCeiling;
 
         /// <summary>
-        /// The ceiling point at which we switch to 'simplifying' mode. This value may be fixed 
+        /// The ceiling point at which we switch to 'simplifying' mode. This value may be fixed
         /// (absolute ceiling) or may be relative to some other value, e.g. the complexity at the
         /// end of the last simplification phase.
         /// </summary>
-        double _complexityCeilingCurrent;
+        private double _complexityCeilingCurrent;
 
         /// <summary>
         /// The current regulation mode - simplifying or complexifying.
         /// </summary>
-        ComplexityRegulationMode _currentMode;
+        private ComplexityRegulationMode _currentMode;
 
         /// <summary>
         /// The generation at which the last transition occurred.
         /// </summary>
-        uint _lastTransitionGeneration;
+        private uint _lastTransitionGeneration;
 
-        #endregion
+        #endregion Instance Fields
 
         #region Constructors
 
@@ -75,16 +76,19 @@ namespace SharpNeat.EvolutionAlgorithms.ComplexityRegulation
 
             // For relative complexity ceiling we await the first call to DetermineMode() before setting the threshold
             // relative to the population mean complexity. Indicate this with -1.0.
-            if(ComplexityCeilingType.Relative ==  ceilingType) {
+            if (ComplexityCeilingType.Relative == ceilingType)
+            {
                 _complexityCeilingCurrent = -1.0;
-            } else {
+            }
+            else
+            {
                 _complexityCeilingCurrent = ceilingValue;
             }
 
             _currentMode = ComplexityRegulationMode.Complexifying;
         }
 
-        #endregion
+        #endregion Constructors
 
         #region Public Methods
 
@@ -94,14 +98,14 @@ namespace SharpNeat.EvolutionAlgorithms.ComplexityRegulation
         /// </summary>
         public ComplexityRegulationMode DetermineMode(NeatAlgorithmStats stats)
         {
-            if(ComplexityRegulationMode.Complexifying == _currentMode)
+            if (ComplexityRegulationMode.Complexifying == _currentMode)
             {
-                if(-1.0 == _complexityCeilingCurrent)
+                if (-1.0 == _complexityCeilingCurrent)
                 {   // First call to DetermineMode(). Continue complexifying and set threshold relative current complexity.
                     _complexityCeilingCurrent = stats._meanComplexity + _complexityCeiling;
-                } 
+                }
                 // Currently complexifying. Test if the complexity ceiling has been reached.
-                else if(stats._meanComplexity > _complexityCeilingCurrent)
+                else if (stats._meanComplexity > _complexityCeilingCurrent)
                 {   // Switch to simplifying mode.
                     _currentMode = ComplexityRegulationMode.Simplifying;
                     _lastTransitionGeneration = stats._generation;
@@ -112,7 +116,7 @@ namespace SharpNeat.EvolutionAlgorithms.ComplexityRegulation
                 // We allow simplification to progress for a few generations before testing of it has stalled, this allows
                 // a lead in time for the effects of simplification to occur.
                 // In addition we do not switch to complexifying if complexity is above the currently defined ceiling.
-                if(((stats._generation - _lastTransitionGeneration) > MinSimplifcationGenerations) 
+                if (((stats._generation - _lastTransitionGeneration) > MinSimplifcationGenerations)
                  && (stats._meanComplexity < _complexityCeilingCurrent)
                  && ((stats._complexityMA.Mean - stats._prevComplexityMA) >= 0.0))
                 {   // Simplification has stalled. Switch back to complexification.
@@ -120,7 +124,8 @@ namespace SharpNeat.EvolutionAlgorithms.ComplexityRegulation
                     _lastTransitionGeneration = stats._generation;
 
                     // Redefine the complexity ceiling (for relative ceiling only).
-                    if(ComplexityCeilingType.Relative == _ceilingType) {
+                    if (ComplexityCeilingType.Relative == _ceilingType)
+                    {
                         _complexityCeilingCurrent = stats._meanComplexity + _complexityCeiling;
                     }
                 }
@@ -128,6 +133,6 @@ namespace SharpNeat.EvolutionAlgorithms.ComplexityRegulation
             return _currentMode;
         }
 
-        #endregion
+        #endregion Public Methods
     }
 }

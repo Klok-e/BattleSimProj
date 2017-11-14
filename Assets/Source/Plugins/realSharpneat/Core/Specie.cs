@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,6 +9,7 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 using System.Collections.Generic;
 
 namespace SharpNeat.Core
@@ -19,11 +20,11 @@ namespace SharpNeat.Core
     public class Specie<TGenome>
         where TGenome : class, IGenome<TGenome>
     {
-        readonly uint _id;
-        int _idx;
-        readonly List<TGenome> _genomeList;
-        CoordinateVector _centroid;
-        
+        private readonly uint _id;
+        private int _idx;
+        private readonly List<TGenome> _genomeList;
+        private CoordinateVector _centroid;
+
         #region Constructors
 
         /// <summary>
@@ -46,7 +47,7 @@ namespace SharpNeat.Core
             _genomeList = new List<TGenome>(capacity);
         }
 
-        #endregion
+        #endregion Constructors
 
         #region Properties
 
@@ -60,7 +61,7 @@ namespace SharpNeat.Core
 
         /// <summary>
         /// Gets or sets the index of the specie in its containing list. This is a working variable
-        /// that typically will be the same as the specie ID but is not guaranteed to be e.g. in a distributed NEAT 
+        /// that typically will be the same as the specie ID but is not guaranteed to be e.g. in a distributed NEAT
         /// environment where specie IDs may become non-contiguous.
         /// </summary>
         public int Idx
@@ -76,9 +77,9 @@ namespace SharpNeat.Core
         {
             get { return _genomeList; }
         }
-        
+
         /// <summary>
-        /// Gets or sets the centroid position for all genomes within the specie. Note that this may be out of 
+        /// Gets or sets the centroid position for all genomes within the specie. Note that this may be out of
         /// date, it is the responsibility of code external to this class to recalculate and set a new centroid
         /// if the set of genomes in the specie has changed and therefore the specieList centroid has also changed.
         /// </summary>
@@ -88,7 +89,7 @@ namespace SharpNeat.Core
             set { _centroid = value; }
         }
 
-        #endregion
+        #endregion Properties
 
         #region Public Methods
 
@@ -100,7 +101,8 @@ namespace SharpNeat.Core
         public double CalcTotalFitness()
         {
             double total = 0.0;
-            foreach(TGenome genome in _genomeList) {
+            foreach (TGenome genome in _genomeList)
+            {
                 total += genome.EvaluationInfo.Fitness;
             }
             return total;
@@ -109,12 +111,12 @@ namespace SharpNeat.Core
         /// <summary>
         /// Calculates the mean fitness of genomes within the specie.
         /// Implemented as a method rather than a property as an indication that this method does significant
-        /// work to calculate the value.        
+        /// work to calculate the value.
         /// </summary>
         public double CalcMeanFitness()
         {
             return CalcTotalFitness() / (double)_genomeList.Count;
-        }        
+        }
 
         /// <summary>
         /// Calculates the total complexity of all genomes within the specie.
@@ -124,7 +126,8 @@ namespace SharpNeat.Core
         public double CalcTotalComplexity()
         {
             double total = 0.0;
-            foreach(TGenome genome in _genomeList) {
+            foreach (TGenome genome in _genomeList)
+            {
                 total += genome.Complexity;
             }
             return total;
@@ -133,13 +136,13 @@ namespace SharpNeat.Core
         /// <summary>
         /// Calculates the mean complexity of genomes within the specie.
         /// Implemented as a method rather than a property as an indication that this method does significant
-        /// work to calculate the value.        
+        /// work to calculate the value.
         /// </summary>
         public double CalcMeanComplexity()
         {
             return CalcTotalComplexity() / (double)_genomeList.Count;
-        }  
+        }
 
-        #endregion
+        #endregion Public Methods
     }
 }

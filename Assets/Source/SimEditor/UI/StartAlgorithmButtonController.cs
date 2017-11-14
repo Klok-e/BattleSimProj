@@ -7,25 +7,31 @@ namespace SimEditor
 {
     public class StartAlgorithmButtonController : MonoBehaviour
     {
-        bool state;
-        Button button;
-        Text textObj;
+        private bool state;
+        private Button button;
+        private Text textObj;
+        [SerializeField] private Button toDisableWhenStarted;
 
         // Use this for initialization
-        void Start()
+        private void Start()
         {
             button = GetComponent<Button>();
             textObj = button.GetComponentInChildren<Text>();
             button.onClick.AddListener(Task);
         }
-        void Task()
+
+        private void Task()
         {
             if (state == false && !stopping)//if initial state is start algorithm
             {
-                Debug.Log("Starting...");
-                state = true;
-                textObj.text = "Stop";
-                GameManagerController.inputManagerInstance.StartRunningGenerations();
+                if (GameManagerController.inputManagerInstance.AnyPlayersPresent())
+                {
+                    Debug.Log("Starting...");
+                    state = true;
+                    textObj.text = "Stop";
+                    toDisableWhenStarted.gameObject.SetActive(false);
+                    GameManagerController.inputManagerInstance.StartRunningGenerations();
+                }
             }
             else if (state == true && !stopping)
             {
@@ -36,8 +42,9 @@ namespace SimEditor
             }
         }
 
-        bool stopping;
-        IEnumerator WaitTillStopped()
+        private bool stopping;
+
+        private IEnumerator WaitTillStopped()
         {
             stopping = true;
             while (true)
@@ -46,6 +53,7 @@ namespace SimEditor
                 {
                     stopping = false;
                     textObj.text = "Start";
+                    toDisableWhenStarted.gameObject.SetActive(true);
                     break;
                 }
                 textObj.text = "Stopping...";

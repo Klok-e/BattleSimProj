@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,6 +9,7 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 namespace SharpNeat.Decoders
 {
     /// <summary>
@@ -18,21 +19,22 @@ namespace SharpNeat.Decoders
     /// </summary>
     public class NetworkActivationScheme
     {
-        bool _acyclicNetwork;
+        private bool _acyclicNetwork;
 
-     //=== Cyclic network specific activation.
-        bool _relaxingActivation;
+        //=== Cyclic network specific activation.
+        private bool _relaxingActivation;
 
         // Non-relaxing network parameter.
-        int _timestepsPerActivation;
+        private int _timestepsPerActivation;
 
         // Relaxing network parameters.
-        double _signalDeltaThreshold;
-        int _maxTimesteps;
+        private double _signalDeltaThreshold;
+
+        private int _maxTimesteps;
 
         // Fast flag. Strictly speaking not part of the activation scheme, but this is currently a
         // convenient place for this flag.
-        bool _fastFlag;
+        private bool _fastFlag;
 
         #region Constructors
 
@@ -41,10 +43,9 @@ namespace SharpNeat.Decoders
         /// </summary>
         private NetworkActivationScheme()
         {
-
         }
 
-        #endregion
+        #endregion Constructors
 
         #region Properties
 
@@ -84,7 +85,7 @@ namespace SharpNeat.Decoders
 
         /// <summary>
         /// Gets the maximum number of activation timesteps before stopping.
-        /// Relaxing activation scheme. 
+        /// Relaxing activation scheme.
         /// </summary>
         public int MaxTimesteps
         {
@@ -99,7 +100,7 @@ namespace SharpNeat.Decoders
             get { return _fastFlag; }
         }
 
-        #endregion
+        #endregion Properties
 
         #region Static Factory Methods
 
@@ -169,6 +170,6 @@ namespace SharpNeat.Decoders
             return scheme;
         }
 
-        #endregion
+        #endregion Static Factory Methods
     }
 }

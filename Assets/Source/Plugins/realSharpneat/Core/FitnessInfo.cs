@@ -1,6 +1,6 @@
 ﻿/* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,6 +9,7 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 namespace SharpNeat.Core
 {
     /// <summary>
@@ -38,7 +39,7 @@ namespace SharpNeat.Core
         public FitnessInfo(double fitness, double alternativeFitness)
         {
             _fitness = fitness;
-            _auxFitnessArr = new AuxFitnessInfo[] {new AuxFitnessInfo("Alternative Fitness", alternativeFitness)};
+            _auxFitnessArr = new AuxFitnessInfo[] { new AuxFitnessInfo("Alternative Fitness", alternativeFitness) };
         }
 
         /// <summary>

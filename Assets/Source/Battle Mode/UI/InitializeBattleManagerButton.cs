@@ -3,30 +3,26 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class InitializeBattleManagerButton : MonoBehaviour
+namespace BattleMode
 {
-    GameObject panelThisIn;
-    Button button;
-
-    // Use this for initialization
-    void Start()
+    public class InitializeBattleManagerButton : MonoBehaviour
     {
-        button = GetComponent<Button>();
-        button.onClick.AddListener(Task);
+        private GameObject panelThisIn;
+        private Button button;
 
-        panelThisIn = transform.parent.gameObject;
-    }
-
-    void Task()
-    {
-        if (BattleManager.battleManagerInst.loadedNets)
+        // Use this for initialization
+        private void Start()
         {
-            BattleManager.battleManagerInst.InitializeEverything();
-            panelThisIn.SetActive(false);
+            button = GetComponent<Button>();
+            button.onClick.AddListener(Task);
+
+            panelThisIn = transform.parent.gameObject;
         }
-        else
+
+        private void Task()
         {
-            Debug.Log("Error: nets not loaded");
+            panelThisIn.SetActive(false);
+            StartBattleSettings.singleton.SaveThis();
         }
     }
 }

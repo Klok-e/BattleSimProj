@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -14,17 +14,17 @@ namespace SharpNeat.Genomes.Neat
 {
     /// <summary>
     /// A single comparison item resulting from the comparison of two genomes. If the CorrelationItemType
-    /// is Match then both connection gene properties will be non-null, otherwise one of them will be null 
+    /// is Match then both connection gene properties will be non-null, otherwise one of them will be null
     /// and the other will hold a reference to a disjoint or excess connection gene.
-    /// 
+    ///
     /// Note. We generally only compare connection genes when comparing genomes. Connection genes along with
     /// their innovation IDs actually represent the complete network topology (and of course the connection weights).
     /// </summary>
     public class CorrelationItem
     {
-        readonly CorrelationItemType _correlationItemType;
-        readonly ConnectionGene _connectionGene1;
-        readonly ConnectionGene _connectionGene2;
+        private readonly CorrelationItemType _correlationItemType;
+        private readonly ConnectionGene _connectionGene1;
+        private readonly ConnectionGene _connectionGene2;
 
         #region Constructor
 
@@ -38,7 +38,7 @@ namespace SharpNeat.Genomes.Neat
             _connectionGene2 = connectionGene2;
         }
 
-        #endregion
+        #endregion Constructor
 
         #region Properties
 
@@ -66,6 +66,6 @@ namespace SharpNeat.Genomes.Neat
             get { return _connectionGene2; }
         }
 
-        #endregion
+        #endregion Properties
     }
 }

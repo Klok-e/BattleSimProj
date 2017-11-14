@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,6 +9,7 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 using SharpNeat.Core;
 using SharpNeat.Genomes.Neat;
 using SharpNeat.Network;
@@ -22,23 +23,25 @@ namespace SharpNeat.Decoders.HyperNeat
     /// This decoder uses a HyperNEAT substrate and queries a CPPN NEAT network to
     /// generate/grow a network from the substrate.
     /// </summary>
-    public class HyperNeatDecoder : IGenomeDecoder<NeatGenome,IBlackBox>
+    public class HyperNeatDecoder : IGenomeDecoder<NeatGenome, IBlackBox>
     {
-        readonly Substrate _substrate;
-        readonly NetworkActivationScheme _activationSchemeCppn;
-        readonly NetworkActivationScheme _activationSchemeSubstrate;
-        readonly bool _lengthCppnInput;
+        private readonly Substrate _substrate;
+        private readonly NetworkActivationScheme _activationSchemeCppn;
+        private readonly NetworkActivationScheme _activationSchemeSubstrate;
+        private readonly bool _lengthCppnInput;
 
-        delegate IBlackBox DecodeCppnGenome(NeatGenome genome);
-        readonly DecodeCppnGenome _decodeCppnMethod;
+        private delegate IBlackBox DecodeCppnGenome(NeatGenome genome);
 
-        delegate IBlackBox CreateSubstrateNetwork(INetworkDefinition networkDef);
-        readonly CreateSubstrateNetwork _createSubstrateNetworkMethod;
+        private readonly DecodeCppnGenome _decodeCppnMethod;
+
+        private delegate IBlackBox CreateSubstrateNetwork(INetworkDefinition networkDef);
+
+        private readonly CreateSubstrateNetwork _createSubstrateNetworkMethod;
 
         #region Constructors
 
         /// <summary>
-        /// Constructs with the provided substrate, CPPN activation scheme and substrate 
+        /// Constructs with the provided substrate, CPPN activation scheme and substrate
         /// network activation scheme.
         /// </summary>
         public HyperNeatDecoder(Substrate substrate,
@@ -53,7 +56,7 @@ namespace SharpNeat.Decoders.HyperNeat
         }
 
         /// <summary>
-        /// Constructs with the provided substrate, CPPN activation scheme and substrate 
+        /// Constructs with the provided substrate, CPPN activation scheme and substrate
         /// network activation scheme.
         /// </summary>
         public HyperNeatDecoder(Substrate substrate,
@@ -69,7 +72,7 @@ namespace SharpNeat.Decoders.HyperNeat
             _lengthCppnInput = lengthCppnInput;
         }
 
-        #endregion
+        #endregion Constructors
 
         #region IGenomeDecoder Members
 
@@ -85,7 +88,8 @@ namespace SharpNeat.Decoders.HyperNeat
             INetworkDefinition substrateNetworkDef = _substrate.CreateNetworkDefinition(cppn, _lengthCppnInput);
 
             // Check for null network. This can happen if, e.g. querying the substrate did not result in any connections.
-            if(null == substrateNetworkDef) {
+            if (null == substrateNetworkDef)
+            {
                 return null;
             }
 
@@ -93,7 +97,7 @@ namespace SharpNeat.Decoders.HyperNeat
             return _createSubstrateNetworkMethod(substrateNetworkDef);
         }
 
-        #endregion
+        #endregion IGenomeDecoder Members
 
         #region Private Methods [CPPN Decoding]
 
@@ -102,12 +106,12 @@ namespace SharpNeat.Decoders.HyperNeat
         /// </summary>
         private DecodeCppnGenome GetDecodeCppnMethod(NetworkActivationScheme activationScheme)
         {
-            if(activationScheme.AcyclicNetwork)
+            if (activationScheme.AcyclicNetwork)
             {
                 return DecodeToFastAcyclicNetwork;
             }
 
-            if(activationScheme.FastFlag)
+            if (activationScheme.FastFlag)
             {
                 return DecodeToFastCyclicNetwork;
             }
@@ -129,7 +133,7 @@ namespace SharpNeat.Decoders.HyperNeat
             return FastCyclicNetworkFactory.CreateFastCyclicNetwork(genome, _activationSchemeCppn);
         }
 
-        #endregion
+        #endregion Private Methods [CPPN Decoding]
 
         #region Private Methods [Substrate Network Creation]
 
@@ -138,12 +142,12 @@ namespace SharpNeat.Decoders.HyperNeat
         /// </summary>
         private CreateSubstrateNetwork GetCreateSubstrateNetworkMethod(NetworkActivationScheme activationScheme)
         {
-            if(activationScheme.AcyclicNetwork)
+            if (activationScheme.AcyclicNetwork)
             {
                 return CreateSubstrateNetwork_AcyclicNetwork;
             }
 
-            if(activationScheme.FastFlag)
+            if (activationScheme.FastFlag)
             {
                 return CreateSubstrateNetwork_FastCyclicNetwork;
             }
@@ -165,6 +169,6 @@ namespace SharpNeat.Decoders.HyperNeat
             return FastCyclicNetworkFactory.CreateFastCyclicNetwork(networkDef, _activationSchemeSubstrate);
         }
 
-        #endregion
+        #endregion Private Methods [Substrate Network Creation]
     }
 }

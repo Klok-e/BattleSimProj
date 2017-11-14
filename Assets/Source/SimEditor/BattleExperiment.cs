@@ -18,7 +18,7 @@ using System.IO;
 
 namespace SimEditor
 {
-    class BattleExperiment
+    internal class BattleExperiment
     {
         public int InputCount = HelperConstants.totalAmountOfSensors;
 
@@ -28,7 +28,7 @@ namespace SimEditor
 
         public NeatEvolutionAlgorithmParameters _eaParams;
         public NeatGenomeParameters _neatGenomeParams;
-        NetworkActivationScheme _activationScheme;
+        private NetworkActivationScheme _activationScheme;
 
         public NeatEvolutionAlgorithm<NeatGenome> _ea;
 
@@ -38,14 +38,13 @@ namespace SimEditor
 
             _eaParams = new NeatEvolutionAlgorithmParameters();
 
-
             _neatGenomeParams = new NeatGenomeParameters();
             //_neatGenomeParams.ActivationFn = new SharpNeat.Network.Linear();
             _neatGenomeParams.AddConnectionMutationProbability = 0.7;
-            _neatGenomeParams.AddNodeMutationProbability = 0.3;
-            _neatGenomeParams.DeleteConnectionMutationProbability = 0.5;
+            _neatGenomeParams.AddNodeMutationProbability = 0.2;
+            _neatGenomeParams.DeleteConnectionMutationProbability = 0.4;
             _neatGenomeParams.ConnectionWeightMutationProbability = 0.94;
-            _neatGenomeParams.InitialInterconnectionsProportion = 0.4;
+            _neatGenomeParams.InitialInterconnectionsProportion = 0;
 
             _neatGenomeParams.FeedforwardOnly = _activationScheme.AcyclicNetwork;
         }
@@ -86,7 +85,6 @@ namespace SimEditor
             return new NeatGenomeFactory(InputCount, OutputCount, _neatGenomeParams);
         }
 
-
         public void SavePopulation(string filename)
         {
             XmlWriterSettings _xwSettings = new XmlWriterSettings();
@@ -101,12 +99,36 @@ namespace SimEditor
             SaveLoad.Load();
         }
 
-        public List<NeatGenome> LoadPopulation(string filename)
+        public List<NeatGenome> LoadPopulation(string filename, int amountToLoad)
         {
-            using (XmlReader xr = XmlReader.Create(Application.dataPath + HelperConstants.saveDirectory + filename))
+            if (File.Exists(Application.dataPath + HelperConstants.saveDirectory + filename))
             {
-                NeatGenomeFactory genomeFactory = (NeatGenomeFactory)CreateGenomeFactory();
-                return NeatGenomeXmlIO.ReadCompleteGenomeList(xr, false, genomeFactory);
+                List<NeatGenome> genomes;
+                using (XmlReader xr = XmlReader.Create(Application.dataPath + HelperConstants.saveDirectory + filename))
+                {
+                    NeatGenomeFactory genomeFactory = (NeatGenomeFactory)CreateGenomeFactory();
+                    genomes = NeatGenomeXmlIO.ReadCompleteGenomeList(xr, false, genomeFactory);
+                }
+
+                var newGenomes = new List<NeatGenome>(amountToLoad);
+                while (newGenomes.Count < amountToLoad)
+                {
+                    for (int i = 0; i < genomes.Count; i++)
+                    {
+                        if (newGenomes.Count >= amountToLoad)
+                        {
+                            break;
+                        }
+                        newGenomes.Add(genomes[i]);
+                    }
+                }
+                Debug.Assert(newGenomes.Count == amountToLoad);
+                return newGenomes;
+            }
+            else
+            {
+                Debug.Log("Could not load pop from " + Application.dataPath + HelperConstants.saveDirectory + filename);
+                return null;
             }
         }
     }

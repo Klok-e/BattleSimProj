@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,8 +9,9 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
-using System.Collections.Generic;
+
 using SharpNeat.Core;
+using System.Collections.Generic;
 
 namespace SharpNeat.DistanceMetrics
 {
@@ -22,7 +23,7 @@ namespace SharpNeat.DistanceMetrics
         #region Public Static Methods
 
         /// <summary>
-        /// Calculates a centroid by comparing each coordinate with every other coordinate. The coord with the lowest 
+        /// Calculates a centroid by comparing each coordinate with every other coordinate. The coord with the lowest
         /// average distance from all other coords is the most central coord (the centroid).
         /// This method uses an inefficient N*N comparison of coords to find a centroid. It is provided only as a last
         /// resort for distance metrics for which no means exist to calculate a centroid more directly.
@@ -30,7 +31,8 @@ namespace SharpNeat.DistanceMetrics
         public static CoordinateVector CalculateCentroid(IDistanceMetric distanceMetric, IList<CoordinateVector> coordList)
         {
             // Test special case - one coord therefore it is the centroid..
-            if(1 == coordList.Count) {   
+            if (1 == coordList.Count)
+            {
                 return new CoordinateVector(coordList[0].CoordArray);
             }
 
@@ -38,10 +40,10 @@ namespace SharpNeat.DistanceMetrics
             int centroidIdx = 0;
             double centroidDistance = CalculateMeanDistanceFromCoords(distanceMetric, coordList, 0);
             int count = coordList.Count;
-            for(int i=1; i<count; i++)
+            for (int i = 1; i < count; i++)
             {
                 double distance = CalculateMeanDistanceFromCoords(distanceMetric, coordList, i);
-                if(distance < centroidDistance)
+                if (distance < centroidDistance)
                 {   // We have a new centroid candidate.
                     centroidDistance = distance;
                     centroidIdx = i;
@@ -52,7 +54,7 @@ namespace SharpNeat.DistanceMetrics
             // an immutable type but it isn't actually immutable)
             return new CoordinateVector(coordList[centroidIdx].CoordArray);
         }
-        
+
         /// <summary>
         /// Calculate the mean distance of the specified coord from all of the other coords using
         /// the provided distance metric.
@@ -67,18 +69,20 @@ namespace SharpNeat.DistanceMetrics
             CoordinateVector targetCoord = coordList[idx];
 
             // Measure distance to all coords before the target one.
-            for(int i=0; i<idx; i++) {
+            for (int i = 0; i < idx; i++)
+            {
                 totalDistance += distanceMetric.GetDistance(targetCoord, coordList[i]);
             }
 
             // Measure distance to all coords after the target one.
-            for(int i=idx+1; i<count; i++) {
+            for (int i = idx + 1; i < count; i++)
+            {
                 totalDistance += distanceMetric.GetDistance(targetCoord, coordList[i]);
             }
 
-            return totalDistance / (count-1);
+            return totalDistance / (count - 1);
         }
 
-        #endregion
+        #endregion Public Static Methods
     }
 }

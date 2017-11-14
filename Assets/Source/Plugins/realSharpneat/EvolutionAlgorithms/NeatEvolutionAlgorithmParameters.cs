@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -19,35 +19,35 @@ namespace SharpNeat.EvolutionAlgorithms
     {
         #region Constants
 
-        const int DefaultSpecieCount = 10;
-        const double DefaultElitismProportion = 0.2;
-        const double DefaultSelectionProportion = 0.2;
+        private const int DefaultSpecieCount = 10;
+        private const double DefaultElitismProportion = 0.2;
+        private const double DefaultSelectionProportion = 0.2;
 
-        const double DefaultOffspringAsexualProportion = 0.5;
-        const double DefaultOffspringSexualProportion = 0.5;
-        const double DefaultInterspeciesMatingProportion = 0.01;
+        private const double DefaultOffspringAsexualProportion = 0.5;
+        private const double DefaultOffspringSexualProportion = 0.5;
+        private const double DefaultInterspeciesMatingProportion = 0.01;
 
-        const int DefaultDestFitnessMovingAverageHistoryLength = 100;
-        const int DefgaultMeanSpecieChampFitnessMovingAverageHistoryLength = 100;
-        const int DefaultComplexityMovingAverageHistoryLength = 100;
+        private const int DefaultDestFitnessMovingAverageHistoryLength = 100;
+        private const int DefgaultMeanSpecieChampFitnessMovingAverageHistoryLength = 100;
+        private const int DefaultComplexityMovingAverageHistoryLength = 100;
 
-        #endregion
+        #endregion Constants
 
         #region Instance Fields
 
-        int _specieCount;
-        double _elitismProportion;
-        double _selectionProportion;
-        
-        double _offspringAsexualProportion;
-        double _offspringSexualProportion;
-        double _interspeciesMatingProportion;
+        private int _specieCount;
+        private double _elitismProportion;
+        private double _selectionProportion;
 
-        int _bestFitnessMovingAverageHistoryLength;
-        int _meanSpecieChampFitnessMovingAverageHistoryLength;
-        int _complexityMovingAverageHistoryLength;
+        private double _offspringAsexualProportion;
+        private double _offspringSexualProportion;
+        private double _interspeciesMatingProportion;
 
-        #endregion
+        private int _bestFitnessMovingAverageHistoryLength;
+        private int _meanSpecieChampFitnessMovingAverageHistoryLength;
+        private int _complexityMovingAverageHistoryLength;
+
+        #endregion Instance Fields
 
         #region Constructor
 
@@ -59,7 +59,7 @@ namespace SharpNeat.EvolutionAlgorithms
             _specieCount = DefaultSpecieCount;
             _elitismProportion = DefaultElitismProportion;
             _selectionProportion = DefaultSelectionProportion;
-            
+
             _offspringAsexualProportion = DefaultOffspringAsexualProportion;
             _offspringSexualProportion = DefaultOffspringSexualProportion;
             _interspeciesMatingProportion = DefaultInterspeciesMatingProportion;
@@ -89,7 +89,7 @@ namespace SharpNeat.EvolutionAlgorithms
             _complexityMovingAverageHistoryLength = copyFrom._complexityMovingAverageHistoryLength;
         }
 
-        #endregion
+        #endregion Constructor
 
         #region Properties
 
@@ -103,7 +103,7 @@ namespace SharpNeat.EvolutionAlgorithms
         }
 
         /// <summary>
-        /// Gets or sets the elitism proportion. 
+        /// Gets or sets the elitism proportion.
         /// We sort specie genomes by fitness and keep the top N%, the other genomes are
         /// removed to make way for the offspring.
         /// </summary>
@@ -115,7 +115,7 @@ namespace SharpNeat.EvolutionAlgorithms
 
         /// <summary>
         /// Gets or sets the selection proportion.
-        /// We sort specie genomes by fitness and select parent genomes for producing offspring from 
+        /// We sort specie genomes by fitness and select parent genomes for producing offspring from
         /// the top N%. Selection is performed prior to elitism being applied, therefore selecting from more
         /// genomes than will be made elite is possible.
         /// </summary>
@@ -124,14 +124,14 @@ namespace SharpNeat.EvolutionAlgorithms
             get { return _selectionProportion; }
             set { _selectionProportion = value; }
         }
-    
+
         /// <summary>
         /// Gets or sets the proportion of offspring to be produced from asexual reproduction (mutation).
         /// </summary>
         public double OffspringAsexualProportion
         {
             get { return _offspringAsexualProportion; }
-            set { _offspringAsexualProportion = value; } 
+            set { _offspringAsexualProportion = value; }
         }
 
         /// <summary>
@@ -140,7 +140,7 @@ namespace SharpNeat.EvolutionAlgorithms
         public double OffspringSexualProportion
         {
             get { return _offspringSexualProportion; }
-            set { _offspringSexualProportion = value; } 
+            set { _offspringSexualProportion = value; }
         }
 
         /// <summary>
@@ -149,7 +149,7 @@ namespace SharpNeat.EvolutionAlgorithms
         public double InterspeciesMatingProportion
         {
             get { return _interspeciesMatingProportion; }
-            set { _interspeciesMatingProportion = value; } 
+            set { _interspeciesMatingProportion = value; }
         }
 
         /// <summary>
@@ -158,7 +158,7 @@ namespace SharpNeat.EvolutionAlgorithms
         public int BestFitnessMovingAverageHistoryLength
         {
             get { return _bestFitnessMovingAverageHistoryLength; }
-            set { _bestFitnessMovingAverageHistoryLength = value; } 
+            set { _bestFitnessMovingAverageHistoryLength = value; }
         }
 
         /// <summary>
@@ -168,20 +168,20 @@ namespace SharpNeat.EvolutionAlgorithms
         public int MeanSpecieChampFitnessMovingAverageHistoryLength
         {
             get { return _meanSpecieChampFitnessMovingAverageHistoryLength; }
-            set { _meanSpecieChampFitnessMovingAverageHistoryLength = value; } 
+            set { _meanSpecieChampFitnessMovingAverageHistoryLength = value; }
         }
 
         /// <summary>
-        /// Gets or sets the history buffer length used for calculating the mean genome complexity moving 
+        /// Gets or sets the history buffer length used for calculating the mean genome complexity moving
         /// average.
         /// </summary>
         public int ComplexityMovingAverageHistoryLength
         {
             get { return _complexityMovingAverageHistoryLength; }
-            set { _complexityMovingAverageHistoryLength = value; } 
+            set { _complexityMovingAverageHistoryLength = value; }
         }
 
-        #endregion
+        #endregion Properties
 
         #region Private Methods
 
@@ -195,12 +195,12 @@ namespace SharpNeat.EvolutionAlgorithms
             _offspringSexualProportion = _offspringSexualProportion / total;
         }
 
-        #endregion
+        #endregion Private Methods
 
         #region Public Methods
 
         /// <summary>
-        /// Creates a set of parameters based on the current set and that are suitable for the simplifying 
+        /// Creates a set of parameters based on the current set and that are suitable for the simplifying
         /// phase of the evolution algorithm when running with complexity regulation enabled.
         /// </summary>
         public NeatEvolutionAlgorithmParameters CreateSimplifyingParameters()
@@ -214,6 +214,6 @@ namespace SharpNeat.EvolutionAlgorithms
             return eaParams;
         }
 
-        #endregion
+        #endregion Public Methods
     }
 }

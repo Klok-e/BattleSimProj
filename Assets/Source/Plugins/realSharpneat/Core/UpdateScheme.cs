@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,19 +9,20 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 using System;
 
 namespace SharpNeat.Core
 {
     /// <summary>
-    /// Represents an update scheme for an IEvolutionAlgorithm. e.g. update per some time duration or 
+    /// Represents an update scheme for an IEvolutionAlgorithm. e.g. update per some time duration or
     /// some number of generations.
     /// </summary>
     public class UpdateScheme
     {
-        readonly UpdateMode _updateMode;
-        readonly uint _generations;
-        readonly TimeSpan _timespan;
+        private readonly UpdateMode _updateMode;
+        private readonly uint _generations;
+        private readonly TimeSpan _timespan;
 
         #region Constructors
 
@@ -43,7 +44,7 @@ namespace SharpNeat.Core
             _timespan = timespan;
         }
 
-        #endregion
+        #endregion Constructors
 
         #region Properties
 
@@ -71,6 +72,6 @@ namespace SharpNeat.Core
             get { return _timespan; }
         }
 
-        #endregion
+        #endregion Properties
     }
 }

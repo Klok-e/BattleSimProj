@@ -1,6 +1,6 @@
 ﻿/* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,17 +9,18 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
+using SharpNeat.Network;
+using SharpNeat.Phenomes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using SharpNeat.Network;
-using SharpNeat.Phenomes;
 
 namespace SharpNeat.Decoders.HyperNeat
 {
     /// <summary>
-    /// HyperNEAT substrate. Encapsulates substrate nodes in sets and connections. Connections can be defined explicitly or 
+    /// HyperNEAT substrate. Encapsulates substrate nodes in sets and connections. Connections can be defined explicitly or
     /// by providing mapping functions that map (connect) between nodes in sets. Node sets can be arranged as layers, however
     /// there is no limitation on node positions within the substrate - nodes in a set can be distributed throughout the substrate
     /// with no restrictions based on e.g. where nodes in other sets are located.
@@ -27,85 +28,98 @@ namespace SharpNeat.Decoders.HyperNeat
     public class Substrate
     {
         /// <summary>
-        /// The maximum number of substrate connections that we cache when using _nodeSetMappingList. If the number of 
-        /// connections is less then this then we cache the substrate connections to avoid having to invoke the mapping 
+        /// The maximum number of substrate connections that we cache when using _nodeSetMappingList. If the number of
+        /// connections is less then this then we cache the substrate connections to avoid having to invoke the mapping
         /// functions when creating/growing a network from the substrate.
         /// </summary>
-        const int ConnectionCountCacheThreshold = 50000;
+        private const int ConnectionCountCacheThreshold = 50000;
+
         /// <summary>
         /// Substrate nodes, represented as distinct sets of nodes. By convention the first and second sets in the
         /// list represent the input and output noes respectively. All other sets represent hidden nodes.
         /// </summary>
-        readonly List<SubstrateNodeSet> _nodeSetList;
+        private readonly List<SubstrateNodeSet> _nodeSetList;
+
         /// <summary>
         /// The activation function library allocated to the networks that are 'grown' from the substrate.
         /// _activationFnId refers to a function in this library.
         /// </summary>
-        readonly IActivationFunctionLibrary _activationFnLibrary;
+        private readonly IActivationFunctionLibrary _activationFnLibrary;
+
         /// <summary>
-        /// The activation function ID that is uniformly allocated to all nodes in the networks that are 'grown' 
+        /// The activation function ID that is uniformly allocated to all nodes in the networks that are 'grown'
         /// from the substrate.
         /// </summary>
-        readonly int _activationFnId;
+        private readonly int _activationFnId;
+
         /// <summary>
-        /// A list of mapping functions that provide a means of obtaining a list of substrate connections 
-        /// from the _nodeSetList. 
+        /// A list of mapping functions that provide a means of obtaining a list of substrate connections
+        /// from the _nodeSetList.
         /// </summary>
-        readonly List<NodeSetMapping> _nodeSetMappingList;
+        private readonly List<NodeSetMapping> _nodeSetMappingList;
+
         /// <summary>
         /// Pre-built set of substrate connections.
         /// </summary>
-        readonly List<SubstrateConnection> _connectionList;
+        private readonly List<SubstrateConnection> _connectionList;
+
         /// <summary>
-        /// A hint to the method creating networks from substrate - approximate number of connections that can be 
+        /// A hint to the method creating networks from substrate - approximate number of connections that can be
         /// expected to be grown by the substrate and it's mapping functions.
         /// </summary>
-        readonly int _connectionCountHint;
+        private readonly int _connectionCountHint;
+
         /// <summary>
         /// The weight threshold below which substrate connections are not created in grown networks.
         /// </summary>
-        readonly double _weightThreshold;
+        private readonly double _weightThreshold;
+
         /// <summary>
         /// Defines the weight range of grown connections (+-maxWeight).
         /// </summary>
-        readonly double _maxWeight;
+        private readonly double _maxWeight;
+
         /// <summary>
         /// Pre-calculated value for rescaling grown connections to the required weight range as described by _maxWeight.
         /// </summary>
-        readonly double _weightRescalingCoeff;
+        private readonly double _weightRescalingCoeff;
+
         /// <summary>
         /// Pre-built node list for creating new concrete network instances. This can be pre-built because
         /// the set of nodes remains the same for each network instantiation, only the connections differ between
         /// instantiations.
         /// </summary>
-        readonly NodeList _netNodeList;
+        private readonly NodeList _netNodeList;
+
         /// <summary>
         /// The number of input nodes.
         /// </summary>
-        readonly int _inputNodeCount;
+        private readonly int _inputNodeCount;
+
         /// <summary>
         /// The number of output nodes.
         /// </summary>
-        readonly int _outputNodeCount;
+        private readonly int _outputNodeCount;
+
         /// <summary>
         /// Dimensionality of the substrate. The number of coordinate values in a node position; typically 2D or 3D.
         /// </summary>
-        readonly int _dimensionality;
+        private readonly int _dimensionality;
 
         #region Constructor
 
         /// <summary>
-        /// Construct a substrate with the provided node sets and a predetermined set of connections. 
+        /// Construct a substrate with the provided node sets and a predetermined set of connections.
         /// </summary>
         /// <param name="nodeSetList">Substrate nodes, represented as distinct sets of nodes. By convention the first and second
         /// sets in the list represent the input and output noes respectively. All other sets represent hidden nodes.</param>
         /// <param name="activationFnLibrary">The activation function library allocated to the networks that are 'grown' from the substrate.</param>
-        /// <param name="activationFnId">The ID of an activation function in activationFnLibrary. This is the activation function 
+        /// <param name="activationFnId">The ID of an activation function in activationFnLibrary. This is the activation function
         /// ID assigned to all nodes in networks that are 'grown' from the substrate. </param>
         /// <param name="weightThreshold">The weight threshold below which substrate connections are not created in grown networks.</param>
         /// <param name="maxWeight">Defines the weight range of grown connections (+-maxWeight).</param>
         /// <param name="connectionList">A predetermined list of substrate connections.</param>
-        public Substrate(List<SubstrateNodeSet> nodeSetList, 
+        public Substrate(List<SubstrateNodeSet> nodeSetList,
                          IActivationFunctionLibrary activationFnLibrary, int activationFnId,
                          double weightThreshold, double maxWeight,
                          List<SubstrateConnection> connectionList)
@@ -113,8 +127,8 @@ namespace SharpNeat.Decoders.HyperNeat
             VaildateSubstrateNodes(nodeSetList);
 
             _nodeSetList = nodeSetList;
-            _inputNodeCount =  _nodeSetList[0].NodeList.Count;
-            _outputNodeCount =  _nodeSetList[1].NodeList.Count;
+            _inputNodeCount = _nodeSetList[0].NodeList.Count;
+            _outputNodeCount = _nodeSetList[1].NodeList.Count;
             _dimensionality = _nodeSetList[0].NodeList[0]._position.GetUpperBound(0) + 1;
 
             _activationFnLibrary = activationFnLibrary;
@@ -138,12 +152,12 @@ namespace SharpNeat.Decoders.HyperNeat
         /// <param name="nodeSetList">Substrate nodes, represented as distinct sets of nodes. By convention the first and second
         /// sets in the list represent the input and output noes respectively. All other sets represent hidden nodes.</param>
         /// <param name="activationFnLibrary">The activation function library allocated to the networks that are 'grown' from the substrate.</param>
-        /// <param name="activationFnId">The ID of an activation function in activationFnLibrary. This is the activation function 
+        /// <param name="activationFnId">The ID of an activation function in activationFnLibrary. This is the activation function
         /// ID assigned to all nodes in networks that are 'grown' from the substrate. </param>
         /// <param name="weightThreshold">The weight threshold below which substrate connections are not created in grown networks.</param>
-        /// <param name="maxWeight">Defines the weight range of grown connections (+-maxWeight).</param>/// 
+        /// <param name="maxWeight">Defines the weight range of grown connections (+-maxWeight).</param>///
         /// <param name="nodeSetMappingList">A list of mappings between node sets that defines what connections to create between substrate nodes.</param>
-        public Substrate(List<SubstrateNodeSet> nodeSetList, 
+        public Substrate(List<SubstrateNodeSet> nodeSetList,
                          IActivationFunctionLibrary activationFnLibrary, int activationFnId,
                          double weightThreshold, double maxWeight,
                          List<NodeSetMapping> nodeSetMappingList)
@@ -151,8 +165,8 @@ namespace SharpNeat.Decoders.HyperNeat
             VaildateSubstrateNodes(nodeSetList);
 
             _nodeSetList = nodeSetList;
-            _inputNodeCount =  _nodeSetList[0].NodeList.Count;
-            _outputNodeCount =  _nodeSetList[1].NodeList.Count;
+            _inputNodeCount = _nodeSetList[0].NodeList.Count;
+            _outputNodeCount = _nodeSetList[1].NodeList.Count;
             _dimensionality = _nodeSetList[0].NodeList[0]._position.GetUpperBound(0) + 1;
 
             _activationFnLibrary = activationFnLibrary;
@@ -163,21 +177,23 @@ namespace SharpNeat.Decoders.HyperNeat
             _weightRescalingCoeff = _maxWeight / (1.0 - _weightThreshold);
 
             _nodeSetMappingList = nodeSetMappingList;
-            
+
             // Get an estimate for the number of connections defined by mappings.
             int nonBiasConnectionCountHint = 0;
-            foreach(NodeSetMapping mapping in nodeSetMappingList) {
+            foreach (NodeSetMapping mapping in nodeSetMappingList)
+            {
                 nonBiasConnectionCountHint += mapping.GetConnectionCountHint(nodeSetList);
             }
 
-            if(nonBiasConnectionCountHint <= ConnectionCountCacheThreshold)
-            {   
+            if (nonBiasConnectionCountHint <= ConnectionCountCacheThreshold)
+            {
                 // Pre-generate the substrate connections and store them in a list.
                 _connectionList = _connectionCountHint == 0 ? new List<SubstrateConnection>() : new List<SubstrateConnection>(nonBiasConnectionCountHint);
-                foreach(NodeSetMapping mapping in nodeSetMappingList)
+                foreach (NodeSetMapping mapping in nodeSetMappingList)
                 {
                     IEnumerable<SubstrateConnection> connectionSequence = mapping.GenerateConnections(nodeSetList);
-                    foreach(SubstrateConnection conn in connectionSequence) {
+                    foreach (SubstrateConnection conn in connectionSequence)
+                    {
                         _connectionList.Add(conn);
                     }
                 }
@@ -191,7 +207,7 @@ namespace SharpNeat.Decoders.HyperNeat
             _netNodeList = CreateNetworkNodeList();
         }
 
-        #endregion
+        #endregion Constructor
 
         #region Properties
 
@@ -204,19 +220,19 @@ namespace SharpNeat.Decoders.HyperNeat
             get { return _nodeSetList; }
         }
 
-        #endregion
+        #endregion Properties
 
         #region Public Methods
 
         /// <summary>
-        /// Create a network definition by querying the provided IBlackBox (typically a CPPN) with the 
+        /// Create a network definition by querying the provided IBlackBox (typically a CPPN) with the
         /// substrate connection endpoints.
         /// </summary>
         /// <param name="blackbox">The HyperNEAT CPPN that defines the strength of connections between nodes on the substrate.</param>
         /// <param name="lengthCppnInput">Optionally we provide a connection length input to the CPPN.</param>
         public INetworkDefinition CreateNetworkDefinition(IBlackBox blackbox, bool lengthCppnInput)
         {
-            // Get the sequence of substrate connections. Either a pre-built list or a dynamically 
+            // Get the sequence of substrate connections. Either a pre-built list or a dynamically
             // generated sequence.
             IEnumerable<SubstrateConnection> connectionSequence = _connectionList ?? GetConnectionSequence();
 
@@ -227,17 +243,18 @@ namespace SharpNeat.Decoders.HyperNeat
             ConnectionList networkConnList = new ConnectionList(_connectionCountHint);
             int lengthInputIdx = _dimensionality + _dimensionality;
 
-            foreach(SubstrateConnection substrateConn in connectionSequence)
+            foreach (SubstrateConnection substrateConn in connectionSequence)
             {
                 // Assign the connection's endpoint position coords to the CPPN/blackbox inputs. Note that position dimensionality is not fixed.
-                for(int i=0; i<_dimensionality; i++) 
+                for (int i = 0; i < _dimensionality; i++)
                 {
                     inputSignalArr[i] = substrateConn._srcNode._position[i];
                     inputSignalArr[i + _dimensionality] = substrateConn._tgtNode._position[i];
                 }
 
                 // Optional connection length input.
-                if(lengthCppnInput) {
+                if (lengthCppnInput)
+                {
                     inputSignalArr[lengthInputIdx] = CalculateConnectionLength(substrateConn._srcNode._position, substrateConn._tgtNode._position);
                 }
 
@@ -250,7 +267,7 @@ namespace SharpNeat.Decoders.HyperNeat
 
                 // Skip connections with a weight magnitude less than _weightThreshold.
                 double weightAbs = Math.Abs(weight);
-                if(weightAbs > _weightThreshold)
+                if (weightAbs > _weightThreshold)
                 {
                     // For weights over the threshold we re-scale into the range [-_maxWeight,_maxWeight],
                     // assuming IBlackBox outputs are in the range [-1,1].
@@ -259,28 +276,29 @@ namespace SharpNeat.Decoders.HyperNeat
                     // Create network definition connection and add to list.
                     networkConnList.Add(new NetworkConnection(substrateConn._srcNode._id,
                                                               substrateConn._tgtNode._id, weight));
-                }  
+                }
             }
 
-            // Additionally we create connections from each hidden and output node to a bias node that is not defined at any 
+            // Additionally we create connections from each hidden and output node to a bias node that is not defined at any
             // position on the substrate. The motivation here is that a each node's input bias is independent of any source
-            // node (and associated source node position on the substrate). That we refer to a bias 'node' is a consequence of how input 
+            // node (and associated source node position on the substrate). That we refer to a bias 'node' is a consequence of how input
             // biases are handled in NEAT - with a specific bias node that other nodes can be connected to.
             int setCount = _nodeSetList.Count;
-            for(int i=1; i<setCount; i++)
+            for (int i = 1; i < setCount; i++)
             {
                 SubstrateNodeSet nodeSet = _nodeSetList[i];
-                foreach(SubstrateNode node in nodeSet.NodeList)
+                foreach (SubstrateNode node in nodeSet.NodeList)
                 {
                     // Assign the node's position coords to the blackbox inputs. The CPPN inputs for source node coords are set to zero when obtaining bias values.
-                    for(int j=0; j<_dimensionality; j++)
+                    for (int j = 0; j < _dimensionality; j++)
                     {
                         inputSignalArr[j] = 0.0;
                         inputSignalArr[j + _dimensionality] = node._position[j];
                     }
 
                     // Optional connection length input.
-                    if(lengthCppnInput) {
+                    if (lengthCppnInput)
+                    {
                         inputSignalArr[lengthInputIdx] = CalculateConnectionLength(node._position);
                     }
 
@@ -293,7 +311,7 @@ namespace SharpNeat.Decoders.HyperNeat
 
                     // Skip connections with a weight magnitude less than _weightThreshold.
                     double weightAbs = Math.Abs(weight);
-                    if(weightAbs > _weightThreshold)
+                    if (weightAbs > _weightThreshold)
                     {
                         // For weights over the threshold we re-scale into the range [-_maxWeight,_maxWeight],
                         // assuming IBlackBox outputs are in the range [-1,1].
@@ -301,14 +319,15 @@ namespace SharpNeat.Decoders.HyperNeat
 
                         // Create network definition connection and add to list. Bias node is always ID 0.
                         networkConnList.Add(new NetworkConnection(0, node._id, weight));
-                    } 
+                    }
                 }
             }
 
             // Check for no connections.
             // If no connections were generated then there is no point in further evaluating the network.
             // However, null is a valid response when decoding genomes to phenomes, therefore we do that here.
-            if(networkConnList.Count == 0) {
+            if (networkConnList.Count == 0)
+            {
                 return null;
             }
 
@@ -321,36 +340,41 @@ namespace SharpNeat.Decoders.HyperNeat
             return networkDef;
         }
 
-        #endregion  
+        #endregion Public Methods
 
         #region Private Methods
-        
+
         private void VaildateSubstrateNodes(List<SubstrateNodeSet> nodeSetList)
         {
             // Baseline validation tests. There should be at least two nodesets (input and output sets), and each of those must have at least one node.
-            if(nodeSetList.Count < 2) {
+            if (nodeSetList.Count < 2)
+            {
                 throw new ArgumentException("Substrate requires a minimum of two NodeSets - one each for input and output nodes.");
             }
 
             // Input nodes.
-            if(nodeSetList[0].NodeList.Count == 0) {
+            if (nodeSetList[0].NodeList.Count == 0)
+            {
                 throw new ArgumentException("Substrate input nodeset must have at least one node.");
             }
 
-            if(nodeSetList[1].NodeList.Count == 0) {
+            if (nodeSetList[1].NodeList.Count == 0)
+            {
                 throw new ArgumentException("Substrate output nodeset must have at least one node.");
             }
 
             // Check for duplicate IDs or ID zero (reserved for bias node).
-            Dictionary<uint,object> idDict = new Dictionary<uint,object>();
-            foreach(SubstrateNodeSet nodeSet in nodeSetList)
+            Dictionary<uint, object> idDict = new Dictionary<uint, object>();
+            foreach (SubstrateNodeSet nodeSet in nodeSetList)
             {
-                foreach(SubstrateNode node in nodeSet.NodeList)
+                foreach (SubstrateNode node in nodeSet.NodeList)
                 {
-                    if(0u == node._id) {
+                    if (0u == node._id)
+                    {
                         throw new ArgumentException("Substrate node with invalid ID of 0 (reserved for bias node).");
                     }
-                    if(idDict.ContainsKey(node._id)) {
+                    if (idDict.ContainsKey(node._id))
+                    {
                         throw new ArgumentException($"Substrate node with duplicate ID of [{node._id}]");
                     }
                     idDict.Add(node._id, null);
@@ -362,9 +386,10 @@ namespace SharpNeat.Decoders.HyperNeat
             SubstrateNodeSet inputNodeSet = nodeSetList[0];
             int count = inputNodeSet.NodeList.Count;
             int expectedId = 1;
-            for(int i=0; i<count; i++, expectedId++)
+            for (int i = 0; i < count; i++, expectedId++)
             {
-                if(inputNodeSet.NodeList[i]._id != expectedId) {
+                if (inputNodeSet.NodeList[i]._id != expectedId)
+                {
                     throw new ArgumentException($"Substrate input node with unexpected ID of [{inputNodeSet.NodeList[i]._id}]. Ids should be contiguous and starting from 1.");
                 }
             }
@@ -372,22 +397,24 @@ namespace SharpNeat.Decoders.HyperNeat
             // Output node IDs should be contiguous and ordered sequentially after the last input ID.
             SubstrateNodeSet outputNodeSet = nodeSetList[1];
             count = outputNodeSet.NodeList.Count;
-            for(int i=0; i<count; i++, expectedId++)
+            for (int i = 0; i < count; i++, expectedId++)
             {
-                if(outputNodeSet.NodeList[i]._id != expectedId) {
+                if (outputNodeSet.NodeList[i]._id != expectedId)
+                {
                     throw new ArgumentException($"Substrate output node with unexpected ID of [{outputNodeSet.NodeList[i]._id}].");
                 }
             }
 
             // Hidden node IDs don't have to be contiguous but must have IDs greater than all of the input and output IDs.
             int setCount = nodeSetList.Count;
-            for(int i=2; i<setCount; i++)
+            for (int i = 2; i < setCount; i++)
             {
                 SubstrateNodeSet hiddenNodeSet = nodeSetList[i];
-                foreach(SubstrateNode node in hiddenNodeSet.NodeList)
+                foreach (SubstrateNode node in hiddenNodeSet.NodeList)
                 {
-                    if(node._id < expectedId) {
-                        throw new ArgumentException($"Substrate hidden node with unexpected ID of [{hiddenNodeSet.NodeList[i]._id}] (must be greater than the last output node ID [{expectedId-1}].");
+                    if (node._id < expectedId)
+                    {
+                        throw new ArgumentException($"Substrate hidden node with unexpected ID of [{hiddenNodeSet.NodeList[i]._id}] (must be greater than the last output node ID [{expectedId - 1}].");
                     }
                 }
             }
@@ -402,7 +429,7 @@ namespace SharpNeat.Decoders.HyperNeat
             // Count nodes in all nodesets except for the first (input) nodeset.
             int total = 0;
             int setCount = nodeSetList.Count;
-            for(int i=1; i<setCount; i++)
+            for (int i = 1; i < setCount; i++)
             {
                 total += nodeSetList[i].NodeList.Count;
             }
@@ -418,7 +445,8 @@ namespace SharpNeat.Decoders.HyperNeat
         {
             // Count the total number of nodes.
             int nodeCount = 0;
-            foreach(SubstrateNodeSet set in _nodeSetList) {
+            foreach (SubstrateNodeSet set in _nodeSetList)
+            {
                 nodeCount += set.NodeList.Count;
             }
             // Count the additional bias node (not explicitly defined on the substrate).
@@ -429,7 +457,7 @@ namespace SharpNeat.Decoders.HyperNeat
 
             // Create bias node.
             // Note. The nodes are created in the order of inputs, outputs and then hidden. This is the order required when constructing
-            // instances of the NeatGenome and NetworkDefinition classes. The requirement comes about through internal implementation of 
+            // instances of the NeatGenome and NetworkDefinition classes. The requirement comes about through internal implementation of
             // those classes - see comments on those classes for more info.
             nodeList.Add(new NetworkNode(0u, NodeType.Bias, _activationFnId));
 
@@ -438,24 +466,27 @@ namespace SharpNeat.Decoders.HyperNeat
             int setNodeCount = nodeSet.NodeList.Count;
 
             // Create input nodes.
-            for(int i=0; i<setNodeCount; i++) {
+            for (int i = 0; i < setNodeCount; i++)
+            {
                 nodeList.Add(new NetworkNode(nodeSet.NodeList[i]._id, NodeType.Input, _activationFnId));
             }
 
             // Create output nodes. By convention the second nodeset describes the output nodes.
             nodeSet = _nodeSetList[1];
             setNodeCount = nodeSet.NodeList.Count;
-            for(int i=0; i<setNodeCount; i++) {
+            for (int i = 0; i < setNodeCount; i++)
+            {
                 nodeList.Add(new NetworkNode(nodeSet.NodeList[i]._id, NodeType.Output, _activationFnId));
             }
 
             // Create hidden nodes (if any). All nodesets after the input and output nodesets define hidden nodes.
             int setCount = _nodeSetList.Count;
-            for(int nodeSetIdx=2; nodeSetIdx<setCount; nodeSetIdx++)
+            for (int nodeSetIdx = 2; nodeSetIdx < setCount; nodeSetIdx++)
             {
                 nodeSet = _nodeSetList[nodeSetIdx];
                 setNodeCount = nodeSet.NodeList.Count;
-                for(int i=0; i<setNodeCount; i++) {
+                for (int i = 0; i < setNodeCount; i++)
+                {
                     nodeList.Add(new NetworkNode(nodeSet.NodeList[i]._id, NodeType.Hidden, _activationFnId));
                 }
             }
@@ -466,20 +497,22 @@ namespace SharpNeat.Decoders.HyperNeat
         private IEnumerable<SubstrateConnection> GetConnectionSequence()
         {
             // If the connections are in a list then return the list.
-            if(null != _connectionList) {
+            if (null != _connectionList)
+            {
                 return _connectionList;
             }
 
             // Generate the connections from the nodeset mappings.
             int count = _nodeSetMappingList.Count;
-            if(0 == count)
+            if (0 == count)
             {   // No mappings.
                 return null;
             }
 
             // Concatenate the IEnumerables from each mapping to produce one all-encompassing IEnumerable.
             IEnumerable<SubstrateConnection> enumerable = _nodeSetMappingList[0].GenerateConnections(_nodeSetList);
-            for(int i=1; i<count; i++) {
+            for (int i = 1; i < count; i++)
+            {
                 enumerable = Enumerable.Concat(enumerable, _nodeSetMappingList[i].GenerateConnections(_nodeSetList));
             }
 
@@ -492,8 +525,9 @@ namespace SharpNeat.Decoders.HyperNeat
         private double CalculateConnectionLength(double[] a, double[] b)
         {
             double acc = 0.0;
-            for(int i=0; i<a.Length; i++)  {
-                acc += (a[i]-b[i]) * (a[i]-b[i]);
+            for (int i = 0; i < a.Length; i++)
+            {
+                acc += (a[i] - b[i]) * (a[i] - b[i]);
             }
             return Math.Sqrt(acc);
         }
@@ -504,12 +538,13 @@ namespace SharpNeat.Decoders.HyperNeat
         private double CalculateConnectionLength(double[] a)
         {
             double acc = 0.0;
-            for(int i=0; i<a.Length; i++)  {
+            for (int i = 0; i < a.Length; i++)
+            {
                 acc += a[i] * a[i];
             }
             return Math.Sqrt(acc);
         }
 
-        #endregion
+        #endregion Private Methods
     }
 }

@@ -6,39 +6,28 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-
-class BattlePlayer : APlayerContoller
+namespace BattleMode
 {
-    public int Team { get { return team; } }
-    private int team;
-
-    private List<IBlackBox> phenomes;
-
-    private void Update()
+    internal class BattlePlayer : APlayerController
     {
+        public int Team { get { return team; } }
+        private int team;
 
+        public List<IBlackBox> phenomes;
+
+        private void Update()
+        {
+        }
+
+        private bool initialized;
+
+        public void Initialize(Vector2 pos, int team, List<IBlackBox> pheno)
+        {
+            Debug.Assert(team >= 1);
+            transform.position = pos;
+            this.team = team;
+            initialized = true;
+            phenomes = pheno;
+        }
     }
-
-    bool initialized;
-    public void Initialize(Vector2 pos, int team, List<IBlackBox> pheno)
-    {
-        Debug.Assert(team > 1);
-        transform.position = pos;
-        this.team = team;
-        initialized = true;
-        phenomes = pheno;
-    }
-
-    public void SpawnWarriors()
-    {
-        throw new NotImplementedException();
-    }
-
-    public void UserInputTick()
-    {
-
-    }
-
-    
 }
-

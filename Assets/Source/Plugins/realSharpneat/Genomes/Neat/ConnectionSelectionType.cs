@@ -1,6 +1,6 @@
 /* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@ namespace SharpNeat.Genomes.Neat
         /// Select a proportion of the weights in a genome.
         /// </summary>
         Proportional,
+
         /// <summary>
         /// Select a fixed number of weights in a genome.
         /// </summary>

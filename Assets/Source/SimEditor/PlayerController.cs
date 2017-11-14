@@ -4,18 +4,20 @@ using SharpNeat.Phenomes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
+
 namespace SimEditor
 {
-    public class PlayerController : APlayerContoller
+    public class PlayerController : APlayerController
     {
         public int AmoutOfWarriorsOwns { get { return amoutOfWarriorsOwns; } }
         private int amoutOfWarriorsOwns;
 
-        BattleExperiment experiment;
+        private BattleExperiment experiment;
 
-        NeatGenomeDecoder decoder;
+        private NeatGenomeDecoder decoder;
 
         public IList<NeatGenome> GenomeList { get { return experiment._ea.GenomeList; } }
 
@@ -24,24 +26,29 @@ namespace SimEditor
 
         //public List<Vector3> pointsToVisitDuringTraining;
         public bool IsEvolutionFreezed { get { return isEvolutionFreezed; } }
+
         private bool isEvolutionFreezed;
 
-        LineRenderer lineRenderer;
+        private LineRenderer lineRenderer;
 
         private void Update()
         {
             if (initialized)
             {
-                lineRenderer.positionCount = pointsToVisitDuringTraining.Count;
-                lineRenderer.SetPositions(pointsToVisitDuringTraining.ToArray());
+                lineRenderer.positionCount = pointsToVisitDuringTraining.Count + 1;
+                var temp = new List<Vector3>(pointsToVisitDuringTraining);
+                temp.Insert(0, new Vector3(defaultPos.x, defaultPos.y, -1));
+                lineRenderer.SetPositions(temp.ToArray());
             }
         }
 
-        bool initialized;
+        private bool initialized;
+
         public void Initialize(Vector2 pos, int amoutOfWarriorsOwns, int team, bool freeze)
         {
             Debug.Assert(amoutOfWarriorsOwns > 5);
             transform.position = pos;
+            defaultPos = pos;
             experiment = CreateExperiment(amoutOfWarriorsOwns);
             decoder = experiment.CreateDecoder();
             this.team = team;
@@ -49,17 +56,19 @@ namespace SimEditor
             this.amoutOfWarriorsOwns = amoutOfWarriorsOwns;
 
             pointsToVisitDuringTraining = new List<Vector3>();
-            pointsToVisitDuringTraining.Add(pos);
 
             initialized = true;
 
             lineRenderer = GetComponent<LineRenderer>();
             isEvolutionFreezed = freeze;
+
+            nextPosChange = new Vector2();
         }
 
         private float CalculateSpeed(List<Vector3> list)
         {
             float totalDistance = 0;
+            if (pointsToVisitDuringTraining.Count != 0) totalDistance = Vector3.Distance(defaultPos, pointsToVisitDuringTraining[0]);
             for (int i = 0; i < pointsToVisitDuringTraining.Count - 1; i++)
             {
                 totalDistance += Vector3.Distance(pointsToVisitDuringTraining[i], pointsToVisitDuringTraining[i + 1]);
@@ -69,27 +78,43 @@ namespace SimEditor
             return moveSpeed;
         }
 
-        public IEnumerator TickTrain()
+        private IEnumerator tickTrain;
+
+        public void ResetToDefault()
         {
-            transform.position = pointsToVisitDuringTraining[0];
+            tickTrain = TickTrain();
+            transform.position = defaultPos;
+        }
+
+        public void Tick()
+        {
+            tickTrain.MoveNext();
+        }
+
+        public Vector2 defaultPos;
+
+        private IEnumerator TickTrain()
+        {
             float moveSpeed = CalculateSpeed(pointsToVisitDuringTraining);
 
-            for (int goingToPointWithIndex = 0; goingToPointWithIndex < pointsToVisitDuringTraining.Count - 1; goingToPointWithIndex++)
+            int ticksPassed = 0;
+            for (int goingToPointWithIndex = 0; goingToPointWithIndex < pointsToVisitDuringTraining.Count; goingToPointWithIndex++)
             {
-                Vector2 directionCurrentlyGoing = (pointsToVisitDuringTraining[goingToPointWithIndex + 1] - transform.position);
-                int timeLeft = (int)Mathf.Round(directionCurrentlyGoing.magnitude / moveSpeed);
+                Vector2 directionCurrentlyGoing = (pointsToVisitDuringTraining[goingToPointWithIndex] - transform.position);
+                int timeLeft = moveSpeed != 0 ? (int)Mathf.Round(directionCurrentlyGoing.magnitude / moveSpeed) : HelperConstants.ticksPerEvaluation;
                 for (; timeLeft >= 0; timeLeft--)
                 {
-                    transform.Translate(directionCurrentlyGoing.normalized * moveSpeed);
-                    yield return new WaitForFixedUpdate();
+                    transform.Translate(nextPosChange);
+                    nextPosChange = (Vector3)(directionCurrentlyGoing.normalized * moveSpeed);
+
+                    ticksPassed++;
+                    yield return false;
                 }
             }
-            transform.position = pointsToVisitDuringTraining[0];
         }
 
         public void UserInputTick()
         {
-
         }
 
         public IEnumerator BeginDoingOneGeneration()
@@ -125,7 +150,7 @@ namespace SimEditor
         {
             var battleEvaluator = new BattleEvaluator<NeatGenome>(this);
 
-            experiment.CreateEvolutionAlgorithm(battleEvaluator, experiment.LoadPopulation(filename));
+            experiment.CreateEvolutionAlgorithm(battleEvaluator, experiment.LoadPopulation(filename, AmoutOfWarriorsOwns));
         }
 
         public void SavePopulation(string filename)

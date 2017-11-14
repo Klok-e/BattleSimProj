@@ -7,9 +7,9 @@ namespace Consolation
     /// <summary>
     /// A console to display Unity's debug logs in-game.
     /// </summary>
-    class Console : MonoBehaviour
+    internal class Console : MonoBehaviour
     {
-        struct Log
+        private struct Log
         {
             public string message;
             public string stackTrace;
@@ -45,16 +45,16 @@ namespace Consolation
         /// </summary>
         public int maxLogs = 1000;
 
-        #endregion
+        #endregion Inspector Settings
 
-        readonly List<Log> logs = new List<Log>();
-        Vector2 scrollPosition;
-        bool visible;
-        bool collapse;
+        private readonly List<Log> logs = new List<Log>();
+        private Vector2 scrollPosition;
+        private bool visible;
+        private bool collapse;
 
         // Visual elements:
 
-        static readonly Dictionary<LogType, Color> logTypeColors = new Dictionary<LogType, Color>
+        private static readonly Dictionary<LogType, Color> logTypeColors = new Dictionary<LogType, Color>
         {
             { LogType.Assert, Color.white },
             { LogType.Error, Color.red },
@@ -63,25 +63,25 @@ namespace Consolation
             { LogType.Warning, Color.yellow },
         };
 
-        const string windowTitle = "Console";
-        const int margin = 20;
-        static readonly GUIContent clearLabel = new GUIContent("Clear", "Clear the contents of the console.");
-        static readonly GUIContent collapseLabel = new GUIContent("Collapse", "Hide repeated messages.");
+        private const string windowTitle = "Console";
+        private const int margin = 20;
+        private static readonly GUIContent clearLabel = new GUIContent("Clear", "Clear the contents of the console.");
+        private static readonly GUIContent collapseLabel = new GUIContent("Collapse", "Hide repeated messages.");
 
-        readonly Rect titleBarRect = new Rect(0, 0, 10000, 20);
-        Rect windowRect = new Rect(margin, margin, Screen.width - (margin * 2), Screen.height - (margin * 2));
+        private readonly Rect titleBarRect = new Rect(0, 0, 10000, 20);
+        private Rect windowRect = new Rect(margin, margin, Screen.width - (margin * 2), Screen.height - (margin * 2));
 
-        void OnEnable()
+        private void OnEnable()
         {
             Application.logMessageReceivedThreaded += HandleLog;
         }
 
-        void OnDisable()
+        private void OnDisable()
         {
             Application.logMessageReceivedThreaded -= HandleLog;
         }
 
-        void Update()
+        private void Update()
         {
             if (Input.GetKeyDown(toggleKey))
             {
@@ -94,7 +94,7 @@ namespace Consolation
             }
         }
 
-        void OnGUI()
+        private void OnGUI()
         {
             if (!visible)
             {
@@ -108,7 +108,7 @@ namespace Consolation
         /// Displays a window that lists the recorded logs.
         /// </summary>
         /// <param name="windowID">Window ID.</param>
-        void DrawConsoleWindow(int windowID)
+        private void DrawConsoleWindow(int windowID)
         {
             DrawLogsList();
             DrawToolbar();
@@ -120,7 +120,7 @@ namespace Consolation
         /// <summary>
         /// Displays a scrollable list of logs.
         /// </summary>
-        void DrawLogsList()
+        private void DrawLogsList()
         {
             scrollPosition = GUILayout.BeginScrollView(scrollPosition);
 
@@ -165,7 +165,7 @@ namespace Consolation
         /// <summary>
         /// Displays options for filtering and changing the logs list.
         /// </summary>
-        void DrawToolbar()
+        private void DrawToolbar()
         {
             GUILayout.BeginHorizontal();
 
@@ -185,7 +185,7 @@ namespace Consolation
         /// <param name="message">Message.</param>
         /// <param name="stackTrace">Trace of where the message came from.</param>
         /// <param name="type">Type of message (error, exception, warning, assert).</param>
-        void HandleLog(string message, string stackTrace, LogType type)
+        private void HandleLog(string message, string stackTrace, LogType type)
         {
             logs.Add(new Log
             {
@@ -203,7 +203,7 @@ namespace Consolation
         /// <param name="innerScrollRect">Rect surrounding scroll view content.</param>
         /// <param name="outerScrollRect">Scroll view container.</param>
         /// <returns>Whether scroll view is scrolled to bottom.</returns>
-        bool IsScrolledToBottom(Rect innerScrollRect, Rect outerScrollRect)
+        private bool IsScrolledToBottom(Rect innerScrollRect, Rect outerScrollRect)
         {
             var innerScrollHeight = innerScrollRect.height;
 
@@ -223,7 +223,7 @@ namespace Consolation
         /// <summary>
         /// Moves the scroll view down so that the last log is visible.
         /// </summary>
-        void ScrollToBottom()
+        private void ScrollToBottom()
         {
             scrollPosition = new Vector2(0, Int32.MaxValue);
         }
@@ -231,7 +231,7 @@ namespace Consolation
         /// <summary>
         /// Removes old logs that exceed the maximum number allowed.
         /// </summary>
-        void TrimExcessLogs()
+        private void TrimExcessLogs()
         {
             if (!restrictLogCount)
             {
