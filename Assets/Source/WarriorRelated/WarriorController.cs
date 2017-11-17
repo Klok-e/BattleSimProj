@@ -183,7 +183,7 @@ namespace Warrior
                 dataData.Add(item);
             }
 
-            dataData.Add(1 - (1 / bloodRemaining));
+            dataData.Add(1 - (bloodRemaining / bloodMax));
             var deltaVector = (playerOwner.transform.position - transform.position).normalized;
             dataData.Add(NormalizeAngle(deltaVector));//magic
 
