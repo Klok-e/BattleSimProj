@@ -165,7 +165,7 @@ namespace Warrior
                 if (hit)
                 {
                     Debug.DrawLine(pos, hit.point);
-                    warrEyeData[obstclEyeCount, 0] = 1 - (hit.distance / sensorRange); //was: eyeData[j] = Math.Min(1 / hit.distance, 1);
+                    obstacleEyeData[obstclEyeCount, 0] = 1 - (hit.distance / sensorRange); //was: eyeData[j] = Math.Min(1 / hit.distance, 1);
                 }
                 obstclEyeCount += 1; //every eye must see distance and what is it
 
