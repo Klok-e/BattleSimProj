@@ -48,6 +48,27 @@ namespace Warrior
 
             stats = new Statistics();
             //TODO: add limbs
+
+            angles = new List<int>();
+
+            #region Calculate angles
+
+            Debug.Assert(raycastSensors % 2 == 1, "amount of sensors is too even");
+            var mul = 0;
+            for (int i = 0; i < raycastSensors; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    angles.Add(90 - diffBetwSensorsInDeg * mul);
+                }
+                if (i % 2 == 1)
+                {
+                    mul += 1;
+                    angles.Add(90 + diffBetwSensorsInDeg * mul);
+                }
+            }
+
+            #endregion Calculate angles
         }
 
         public void Revive(Vector2 pos)
@@ -83,88 +104,92 @@ namespace Warrior
             return action;
         }
 
+        private List<int> angles;
+
         public readonly int sensorRange = 10;
-        public readonly int raycastSensors = 7;
-        public readonly int diffBetwSensorsInDeg = 15;
+        public readonly int raycastSensors = 5;
+        public readonly int diffBetwSensorsInDeg = 24;
 
         private double[] GatherDataOfEnvironment()
         {
-            var angles = new List<int>();
-
-            #region Calculate angles
-
-            Debug.Assert(raycastSensors % 2 == 1, "amount of sensors is too even");
-            var mul = 0;
-            for (int i = 0; i < raycastSensors; i++)
-            {
-                if (i % 2 == 0)
-                {
-                    angles.Add(90 - diffBetwSensorsInDeg * mul);
-                }
-                if (i % 2 == 1)
-                {
-                    mul += 1;
-                    angles.Add(90 + diffBetwSensorsInDeg * mul);
-                }
-            }
-
-            #endregion Calculate angles
-
-            var dataData = new List<double>();
+            var dataData = new List<double>(60);
 
             #region Raycasts
 
-            var eyeData = new double[raycastSensors * 4];
+            var warrEyeData = new double[raycastSensors, 3];
+            var obstacleEyeData = new double[raycastSensors, 1];
 
             var pos = transform.position;
-            var mask = LayerMask.GetMask("Obstacle", "Warrior", "Projectile");
-            var j = 0;
+
+            var warrMask = LayerMask.GetMask(HelperConstants.warriorTag, HelperConstants.projectileTag);
+            var obstMask = LayerMask.GetMask(HelperConstants.obstacleTag);
+
+            var warrEyeCount = 0;
+            var obstclEyeCount = 0;
             foreach (var angle in angles)
             {
                 var dir = transform.TransformDirection(new Vector3(Mathf.Cos(Mathf.Deg2Rad * (angle)), Mathf.Sin(Mathf.Deg2Rad * (angle)), 0).normalized);
-                RaycastHit2D hit = Physics2D.Raycast(pos, dir, sensorRange, mask);
+                RaycastHit2D hit;
+
+                #region Other warrs
+
+                hit = Physics2D.Raycast(pos, dir, sensorRange, warrMask);
                 if (hit)
                 {
                     Debug.DrawLine(pos, hit.point);
-                    eyeData[j] = hit.distance / sensorRange; //was: eyeData[j] = Math.Min(1 / hit.distance, 1);
-                    if (hit.collider.tag.Equals("Obstacle"))
-                    {
-                        //Debug.Log(hit.point + "obst" + hit.distance);
-                        eyeData[j + 1] = -1;//2nd elem is whether it is warrior or obstacle
-                        eyeData[j + 2] = 0;//3rd element is team
-                        eyeData[j + 3] = 0;//4th element is angle between this warrior and other
-                    }
-                    else if (hit.collider.tag.Equals("Warrior"))
+                    warrEyeData[warrEyeCount, 0] = 1 - (hit.distance / sensorRange); //was: eyeData[j] = Math.Min(1 / hit.distance, 1);
+                    if (hit.collider.tag.Equals(HelperConstants.warriorTag))
                     {
                         var other = hit.collider.GetComponent<WarriorController>();
-                        //Debug.Log(hit.point + "warr" + hit.distance);
-                        eyeData[j + 1] = 1;
-                        eyeData[j + 2] = other.team == team ? 0 : 1;//0 if same team else 1
-                        eyeData[j + 3] = Helpers.NormalizeNumber(Vector2.Angle(other.transform.up, transform.up), 0, 180, false);//4th element is angle between this warrior and other
-                                                                                                                                 //eyeData[j + 3] = NormalizeAngle((other.transform.up - transform.up).normalized);
+
+                        warrEyeData[warrEyeCount, 1] = other.team == team ? 0 : 1;//0 if same team else 1
+                        warrEyeData[warrEyeCount, 2] = Helpers.NormalizeNumber(Vector2.Angle(other.transform.up, transform.up), 0, 180, false);//4th element is angle between this warrior and other
+                                                                                                                                               //eyeData[j + 3] = NormalizeAngle((other.transform.up - transform.up).normalized);
                     }
-                    else if (hit.collider.tag.Equals("Projectile"))
+                    else if (hit.collider.tag.Equals(HelperConstants.projectileTag))
                     {
                         var projectile = hit.collider.GetComponent<ProjectileController>();
-                        eyeData[j + 1] = 0;
-                        eyeData[j + 2] = -1;//-1 - projectile
-                        eyeData[j + 3] = Helpers.NormalizeNumber(Vector2.Angle(projectile.transform.up, transform.up), 0, 180, false);
+
+                        warrEyeData[warrEyeCount, 1] = -1;//-1 - projectile
+                        warrEyeData[warrEyeCount, 2] = Helpers.NormalizeNumber(Vector2.Angle(projectile.transform.up, transform.up), 0, 180, false);
                         //eyeData[j + 3] = NormalizeAngle((transform.TransformPoint(projectile.Direction) - transform.up).normalized);
                     }
                 }
-                j += 4; //every eye must see distance and what is it
+                warrEyeCount += 1; //every eye must see distance and what is it
+
+                #endregion Other warrs
+
+                #region Obstacles
+
+                hit = Physics2D.Raycast(pos, dir, sensorRange, obstMask);
+                if (hit)
+                {
+                    Debug.DrawLine(pos, hit.point);
+                    warrEyeData[obstclEyeCount, 0] = 1 - (hit.distance / sensorRange); //was: eyeData[j] = Math.Min(1 / hit.distance, 1);
+                }
+                obstclEyeCount += 1; //every eye must see distance and what is it
+
+                #endregion Obstacles
             }
 
             #endregion Raycasts
 
-            dataData.AddRange(eyeData);
+            foreach (var item in warrEyeData)
+            {
+                dataData.Add(item);
+            }
+            foreach (var item in obstacleEyeData)
+            {
+                dataData.Add(item);
+            }
+
             dataData.Add(1 - (1 / bloodRemaining));
             var deltaVector = (playerOwner.transform.position - transform.position).normalized;
             dataData.Add(NormalizeAngle(deltaVector));//magic
 
             var temp = dataData.ToArray();
-            Debug.Assert(HelperConstants.totalAmountOfSensors == temp.Length);
-            return temp;//30 sensors total
+            Debug.Assert(HelperConstants.totalAmountOfSensors == temp.Length, $"wrong array length: {HelperConstants.totalAmountOfSensors} != {temp.Length}");
+            return temp;
         }
 
         private float NormalizeAngle(Vector2 deltaVector)

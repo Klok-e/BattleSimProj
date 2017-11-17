@@ -126,7 +126,7 @@ namespace SimEditor
                     #region Select warrior
 
                     worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                    coll = Physics2D.OverlapCircle(worldPoint, 0.5f, LayerMask.GetMask("Warrior"));
+                    coll = Physics2D.OverlapCircle(worldPoint, 0.5f, LayerMask.GetMask(HelperConstants.warriorTag));
 
                     if (coll)
                     {
@@ -178,7 +178,7 @@ namespace SimEditor
                         if (Input.GetMouseButton(0))
                         {
                             var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                            var colls = Physics2D.OverlapCircleAll(worldPoint, HelperConstants.brushSize, LayerMask.GetMask("Tile"));
+                            var colls = Physics2D.OverlapCircleAll(worldPoint, HelperConstants.brushSize, LayerMask.GetMask(HelperConstants.tileTag));
 
                             foreach (var item in colls)
                             {
@@ -194,7 +194,7 @@ namespace SimEditor
                         if (Input.GetMouseButton(1))
                         {
                             var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                            var colls = Physics2D.OverlapCircleAll(worldPoint, HelperConstants.brushSize, LayerMask.GetMask("Obstacle"));
+                            var colls = Physics2D.OverlapCircleAll(worldPoint, HelperConstants.brushSize, LayerMask.GetMask(HelperConstants.obstacleTag));
 
                             foreach (var item in colls)
                             {

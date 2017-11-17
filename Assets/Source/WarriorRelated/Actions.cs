@@ -44,7 +44,7 @@ namespace Warrior
                 DebugExtension.DebugWireSphere(dealDamageAt, radius);
                 if (isFinished)
                 {
-                    var coll = Physics2D.OverlapCircle(dealDamageAt, radius, LayerMask.GetMask("Warrior"));
+                    var coll = Physics2D.OverlapCircle(dealDamageAt, radius, LayerMask.GetMask(HelperConstants.warriorTag));
                     if (coll)
                     {
                         var attackedWarr = coll.GetComponent<WarriorController>();

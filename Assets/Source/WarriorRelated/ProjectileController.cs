@@ -31,7 +31,7 @@ namespace Warrior
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
-            if (collision.gameObject.tag.Equals("Warrior") && collision.gameObject.activeSelf)
+            if (collision.gameObject.tag.Equals(HelperConstants.warriorTag) && collision.gameObject.activeSelf)
             {
                 var attackedWarr = collision.gameObject.GetComponent<WarriorController>();
                 Debug.Assert(attackedWarr != null);
@@ -54,7 +54,7 @@ namespace Warrior
                     Die();
                 }
             }
-            else if (collision.gameObject.tag.Equals("Obstacle"))
+            else if (collision.gameObject.tag.Equals(HelperConstants.obstacleTag))
             {
                 Die();
             }

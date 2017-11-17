@@ -126,10 +126,10 @@ public static class Helpers
 public static class HelperConstants
 {
     public const string saveDirectory = "/save/";
-    public const int totalAmountOfSensors = 30;
+    public const int totalAmountOfSensors = 22;
     public const int totalAmountOfOutputsOfNet = 4;
     public static float speedMultOfWa = 0.15f;
-    public static int complexityThreshold = 400;
+    public static int complexityThreshold = 500;
     public static int warriorSpawnOffset = 4;
     public static float warriorRotationSpeed = 10f;
     public static float projectileSpeed = 0.4f;
@@ -147,4 +147,9 @@ public static class HelperConstants
     //public const int minSizeOfMap = 10;
 
     public static float brushSize = 1;
+
+    public const string warriorTag = "Warrior";
+    public const string obstacleTag = "Obstacle";
+    public const string projectileTag = "Projectile";
+    public const string tileTag = "Tile";
 }
