@@ -17,7 +17,7 @@ public class NeuralAI
 
     public IBlackBox network { get; }
 
-    public NeuralAI(int inps, int outps, Random rand,IBlackBox net)
+    public NeuralAI(int inps, int outps, Random rand, IBlackBox net)
     {
         random = rand;
         inputsNum = inps;

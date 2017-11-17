@@ -44,6 +44,8 @@ namespace Warrior
             rotationSpeed = HelperConstants.warriorRotationSpeed;
             isShooter = true;
 
+            positionsDuringSomeTime = new Helpers.Deque<Vector2>(3);//TODO: magic number
+
             stats = new Statistics();
             //TODO: add limbs
         }
@@ -68,17 +70,20 @@ namespace Warrior
             currentAction.Tick();
         }
 
+        public double[] data { get; private set; }
+        public double[] prediction { get; private set; }
+
         public Actions.Action ChooseAction()
         {
-            var data = GatherDataOfEnvironment();
-            var pred = ai.Predict(data);
+            data = GatherDataOfEnvironment();
+            prediction = ai.Predict(data);
             Actions.Action action;
 
-            action = PredictionToAction(pred);
+            action = PredictionToAction(prediction);
             return action;
         }
 
-        public readonly int sensorRange = 6;
+        public readonly int sensorRange = 10;
         public readonly int raycastSensors = 7;
         public readonly int diffBetwSensorsInDeg = 15;
 
@@ -121,7 +126,7 @@ namespace Warrior
                 if (hit)
                 {
                     Debug.DrawLine(pos, hit.point);
-                    eyeData[j] = Math.Min(1 / hit.distance, 1);
+                    eyeData[j] = hit.distance / sensorRange; //was: eyeData[j] = Math.Min(1 / hit.distance, 1);
                     if (hit.collider.tag.Equals("Obstacle"))
                     {
                         //Debug.Log(hit.point + "obst" + hit.distance);
@@ -135,15 +140,15 @@ namespace Warrior
                         //Debug.Log(hit.point + "warr" + hit.distance);
                         eyeData[j + 1] = 1;
                         eyeData[j + 2] = other.team == team ? 0 : 1;//0 if same team else 1
-                        eyeData[j + 3] = (Vector2.Angle(other.transform.up, transform.up) * Mathf.Deg2Rad);//4th element is angle between this warrior and other
-                                                                                                           //eyeData[j + 3] = NormalizeAngle((other.transform.up - transform.up).normalized);
+                        eyeData[j + 3] = Helpers.NormalizeNumber(Vector2.Angle(other.transform.up, transform.up), 0, 180, false);//4th element is angle between this warrior and other
+                                                                                                                                 //eyeData[j + 3] = NormalizeAngle((other.transform.up - transform.up).normalized);
                     }
                     else if (hit.collider.tag.Equals("Projectile"))
                     {
                         var projectile = hit.collider.GetComponent<ProjectileController>();
                         eyeData[j + 1] = 0;
                         eyeData[j + 2] = -1;//-1 - projectile
-                        eyeData[j + 3] = (Vector2.Angle(projectile.transform.up, transform.up) * Mathf.Deg2Rad);
+                        eyeData[j + 3] = Helpers.NormalizeNumber(Vector2.Angle(projectile.transform.up, transform.up), 0, 180, false);
                         //eyeData[j + 3] = NormalizeAngle((transform.TransformPoint(projectile.Direction) - transform.up).normalized);
                     }
                 }
@@ -197,6 +202,7 @@ namespace Warrior
         }
 
         public bool isShooter;
+        public Helpers.Deque<Vector2> positionsDuringSomeTime;
 
         private Actions.Action PredictionToAction(double[] pred)
         {
@@ -205,10 +211,7 @@ namespace Warrior
              * [1] - speed
              * [2] - whether to attack
              * [3] - whether to idle
-             * [4] - whether to block NOT USED
             */
-
-            var angle = (float)(pred[0] > 0.5 ? 0.5 * rotationSpeed : -0.5 * rotationSpeed);
 
             if (pred[2] >= 1)//attack
             {
@@ -221,6 +224,8 @@ namespace Warrior
             {
                 return new Actions.IdleAction();
             }
+
+            var angle = (float)(pred[0] > 0.5 ? 0.5 * rotationSpeed : -0.5 * rotationSpeed);
             var moveBy = (float)pred[1] > 0.5 ? (float)pred[1] : -(float)pred[1];//backwards is slower
             return new Actions.MoveAction(moveBy * speed, angle, this);
         }

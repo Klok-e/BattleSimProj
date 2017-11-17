@@ -55,11 +55,6 @@ namespace SimEditor
             Debug.Assert(warriorsTotal % 2 == 0);
         }
 
-        private void Update()
-        {
-            ProcessUserInput();
-        }
-
         public void Initialize()
         {
             Debug.Log("Initializing sim");
@@ -220,7 +215,7 @@ namespace SimEditor
 
             for (int i = 0; i < HelperConstants.evaluationsPerGeneration; i++)//HelperConstants.evaluationsPerGeneration evaluations
             {
-                Debug.Log($"Setting timescale to {timeScaleEvaluation}");
+                //Debug.Log($"Setting timescale to {timeScaleEvaluation}");
                 Time.timeScale = timeScaleEvaluation;
                 ResetWarriorsToTheirDefaults();
                 yield return StartCoroutine(Evaluate());
@@ -419,35 +414,5 @@ namespace SimEditor
         {
             HelperConstants.fitnessPenaltyForKillingAlly = num;
         }
-
-        #region User input
-
-        public Text textToDisplay;
-        private WarriorController currentlySelectedWarr;
-
-        private void ProcessUserInput()
-        {
-            if (textToDisplay != null)
-            {
-                if (Input.GetMouseButtonDown(0))
-                {
-                    var worldPoint = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                    var coll = Physics2D.OverlapCircle(worldPoint, 0.5f, LayerMask.GetMask("Warrior"));
-
-                    if (coll)
-                    {
-                        currentlySelectedWarr = coll.GetComponent<WarriorController>();
-                    }
-                    else
-                    {
-                        currentlySelectedWarr = null;
-                    }
-                }
-                if (currentlySelectedWarr != null)
-                    textToDisplay.text = currentlySelectedWarr.GetFitness().ToString();
-            }
-        }
-
-        #endregion User input
     }
 }

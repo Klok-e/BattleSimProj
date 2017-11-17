@@ -34,12 +34,12 @@ namespace SimEditor
 
         public BattleExperiment()
         {
-            _activationScheme = NetworkActivationScheme.CreateCyclicFixedTimestepsScheme(2);
+            _activationScheme = NetworkActivationScheme.CreateCyclicFixedTimestepsScheme(2, true);
 
             _eaParams = new NeatEvolutionAlgorithmParameters();
 
             _neatGenomeParams = new NeatGenomeParameters();
-            //_neatGenomeParams.ActivationFn = new SharpNeat.Network.Linear();
+            //_neatGenomeParams.ActivationFn = new SharpNeat.Network.SReLU();
             _neatGenomeParams.AddConnectionMutationProbability = 0.7;
             _neatGenomeParams.AddNodeMutationProbability = 0.2;
             _neatGenomeParams.DeleteConnectionMutationProbability = 0.4;

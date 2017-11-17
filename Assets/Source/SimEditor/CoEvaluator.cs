@@ -8,7 +8,7 @@ namespace SimEditor
     public class CoEvaluator
     {
         private int players;
-        public Dictionary<PlayerController, Dictionary<IBlackBox, NeatGenome>> playerNetsDict { get; } = new Dictionary<PlayerController, Dictionary<IBlackBox, NeatGenome>>();
+        public Dictionary<PlayerController, Dictionary<IBlackBox, NeatGenome>> playerNetsDict { get; } = new Dictionary<PlayerController, Dictionary<IBlackBox, NeatGenome>>();//TODO: wtf is this (fix needed)
 
         public bool evalFinished;
         public bool EvalRequested { get { return evalRequested; } }

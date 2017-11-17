@@ -148,7 +148,8 @@ namespace Warrior
                     var plOwnerCurrPos = moves.PlayerOwner.transform.position;
                     var plOwnerNextPos = plOwnerCurrPos + (Vector3)moves.PlayerOwner.nextPosChange;
 
-                    var posWillMostLikelyMove = moveToPos;//TODO: pos will most likely move
+                    moves.positionsDuringSomeTime.Add(posBeforeMove);//save position to calculate avg speed later
+                    var posWillMostLikelyMove = moves.transform.TransformPoint(Vector3.up * Helpers.AvgSpeedWithPositions(moves.positionsDuringSomeTime));//TODO: pos will most likely move
 
                     var distMovedTowPl = Vector3.Distance(posBeforeMove, plOwnerCurrPos) - Vector3.Distance(posWillMostLikelyMove, plOwnerNextPos);
                     var distToPl = Vector3.Distance(moves.transform.position, plOwnerCurrPos);

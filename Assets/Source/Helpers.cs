@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+
 using ue = UnityEngine;
 
-internal static class Helpers
+public static class Helpers
 {
     public static string ArrayToString(double[] arr)
     {
@@ -24,15 +26,110 @@ internal static class Helpers
     {
         return new ue.Vector2(ue.Random.Range(-1f, 1f), ue.Random.Range(-1f, 1f)).normalized;
     }
+
+    public static float AvgSpeedWithPositions(Deque<ue.Vector2> deque)
+    {
+        float distance = 0;
+        for (int i = 0; i < deque.Length - 1; i++)
+        {
+            distance += (deque[i] - deque[i + 1]).magnitude;
+        }
+        if (deque.Length > 0)
+        {
+            return distance / deque.Length;
+        }
+        return 0;
+    }
+
+    #region Normalize overloads
+
+    /// <param name="x">to normalize</param>
+    /// <param name="min">min value of x</param>
+    /// <param name="max">max value of x</param>
+    /// <param name="isZeroOneRange">if true then normalizes to 0..1, else - -1..1</param>
+    /// <returns></returns>
+    public static double NormalizeNumber(double x, double min, double max, bool isZeroOneRange = true)
+    {
+        Debug.Assert(min <= x && x <= max);
+
+        double ans = (x - min) / (max - min);
+        if (!isZeroOneRange)
+        {
+            ans = -1 + 2 * ans;
+            Debug.Assert(-1 <= ans && ans <= 1);
+        }
+        else
+        {
+            Debug.Assert(0 <= ans && ans <= 1);
+        }
+        return ans;
+    }
+
+    /// <param name="x">to normalize</param>
+    /// <param name="min">min value of x</param>
+    /// <param name="max">max value of x</param>
+    /// <param name="isZeroOneRange">if true then normalizes to 0..1, else - -1..1</param>
+    /// <returns></returns>
+    public static float NormalizeNumber(float x, float min, float max, bool isZeroOneRange = true)
+    {
+        Debug.Assert(min <= x && x <= max, $"{x.ToString()} not in range {min}..{max}");
+
+        float ans = (x - min) / (max - min);
+        if (!isZeroOneRange)
+        {
+            ans = -1 + 2 * ans;
+            Debug.Assert(-1 <= ans && ans <= 1, $"{ans.ToString()} not in range -1..1");
+        }
+        else
+        {
+            Debug.Assert(0 <= ans && ans <= 1, $"{ans.ToString()} not in range 0..1");
+        }
+        return ans;
+    }
+
+    #endregion Normalize overloads
+
+    public class Deque<T>
+    {
+        private List<T> internalList;
+        private int size;
+
+        public int Length { get; private set; }
+
+        public Deque(int size)
+        {
+            internalList = new List<T>(size);
+            this.size = size;
+            Length = 0;
+        }
+
+        public void Add(T elem)
+        {
+            internalList.Add(elem);
+            if (internalList.Count > size)
+            {
+                internalList.RemoveAt(0);
+            }
+            Length = internalList.Count;
+        }
+
+        public T this[int index]
+        {
+            get
+            {
+                return internalList[index];
+            }
+        }
+    }
 }
 
-internal static class HelperConstants
+public static class HelperConstants
 {
     public const string saveDirectory = "/save/";
     public const int totalAmountOfSensors = 30;
-    public const int totalAmountOfOutputsOfNet = 5;
+    public const int totalAmountOfOutputsOfNet = 4;
     public static float speedMultOfWa = 0.15f;
-    public static int complexityThreshold = 200;
+    public static int complexityThreshold = 400;
     public static int warriorSpawnOffset = 4;
     public static float warriorRotationSpeed = 10f;
     public static float projectileSpeed = 0.4f;
