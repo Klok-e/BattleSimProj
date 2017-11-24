@@ -11,7 +11,7 @@ namespace SimEditor
     {
         public static GameManagerController inputManagerInstance;
 
-        public SimController simInst;
+        [HideInInspector] public SimController simInst;
         private bool brushMode;
         private PlayerController currentlySelectedPlayer;
         private WarriorController currentlySelectedWarr;
@@ -257,6 +257,8 @@ namespace SimEditor
 
         private void Start()
         {
+            simInst = GetComponent<SimController>();
+
             Application.runInBackground = true;
             SaveLoad.Load();
             loadMenuInst.Refresh();

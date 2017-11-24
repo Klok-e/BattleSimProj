@@ -1,6 +1,6 @@
 ﻿/* ***************************************************************************
  * This file is part of SharpNEAT - Evolution of Neural Networks.
- * 
+ *
  * Copyright 2004-2016 Colin Green (sharpneat@gmail.com)
  *
  * SharpNEAT is free software; you can redistribute it and/or modify
@@ -9,6 +9,7 @@
  * You should have received a copy of the MIT License
  * along with SharpNEAT; if not, see https://opensource.org/licenses/MIT.
  */
+
 using Redzen.Numerics;
 
 namespace SharpNeat.Network
@@ -18,7 +19,7 @@ namespace SharpNeat.Network
     /// From:
     ///    https://en.wikipedia.org/wiki/Activation_function
     ///    https://arxiv.org/abs/1512.07030 [Deep Learning with S-shaped Rectified Linear Activation Units]
-    ///    
+    ///
     /// </summary>
     public class SReLU : IActivationFunction
     {
@@ -35,21 +36,34 @@ namespace SharpNeat.Network
 
         public bool AcceptsAuxArgs => false;
 
+        private double _tl = 0.001;
+        private double _tr = 0.999;
+        private double _a = 0.00001;
+
+        /// <param name="tl">left threshold</param>
+        /// <param name="tr">right threshold</param>
+        /// <param name="a">multiplier if threshold is reached</param>
+        public void SetParameters(double tl, double tr, double a)
+        {
+            _tl = tl;
+            _tr = tr;
+            _a = a;
+        }
+
         public double Calculate(double x, double[] auxArgs)
         {
-            const double tl = 0.001; // threshold (left).
-            const double tr = 0.999; // threshold (right).
-            const double a = 0.00001;
-
             double y;
-            if(x > tl && x < tr) {
+            if (x > _tl && x < _tr)
+            {
                 y = x;
             }
-            else if(x <= tl) {
-                y = tl + (x - tl) * a;
+            else if (x <= _tl)
+            {
+                y = _tl + (x - _tl) * _a;
             }
-            else {
-                y = tr + (x - tr) * a;
+            else
+            {
+                y = _tr + (x - _tr) * _a;
             }
 
             return y;
@@ -57,18 +71,21 @@ namespace SharpNeat.Network
 
         public float Calculate(float x, float[] auxArgs)
         {
-            float tl = 0.001f; // threshold (left).
-            float tr = 0.999f; // threshold (right).
-            float a = 0.00001f;
+            float tl = (float)_tl; // threshold (left).
+            float tr = (float)_tr; // threshold (right).
+            float a = (float)_a;
 
             float y;
-            if(x > tl && x < tr) {
+            if (x > tl && x < tr)
+            {
                 y = x;
             }
-            else if(x <= tl) {
+            else if (x <= tl)
+            {
                 y = tl + (x - tl) * a;
             }
-            else {
+            else
+            {
                 y = tr + (x - tr) * a;
             }
 

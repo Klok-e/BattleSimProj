@@ -8,5 +8,6 @@
         public float damageFromEnemy = 0;
         public float passedToFlagDistCoef = 0;
         public float passedFromFlagDistCoef = 0;
+        public float distToFlagCoefBonus = 0;
     }
 }

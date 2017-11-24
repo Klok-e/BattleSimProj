@@ -39,7 +39,11 @@ namespace SimEditor
             _eaParams = new NeatEvolutionAlgorithmParameters();
 
             _neatGenomeParams = new NeatGenomeParameters();
-            //_neatGenomeParams.ActivationFn = new SharpNeat.Network.SReLU();
+
+            SharpNeat.Network.SReLU func = (SharpNeat.Network.SReLU)new SharpNeat.Network.SReLU();
+            func.SetParameters(-0.8, 0.8, 0.05);
+
+            _neatGenomeParams.ActivationFn = func;
             _neatGenomeParams.AddConnectionMutationProbability = 0.7;
             _neatGenomeParams.AddNodeMutationProbability = 0.2;
             _neatGenomeParams.DeleteConnectionMutationProbability = 0.4;

@@ -124,7 +124,7 @@ namespace SimEditor
                         yield return null;
                     }
                     yield return StartCoroutine(MutualEvaluation());
-                    yield return null;
+                    yield return null;//wait till the next frame
                 }
             }
         }
@@ -378,6 +378,8 @@ namespace SimEditor
 
             var scrpt = newObj.GetComponent<WarriorController>();
             scrpt.Initialize(pos, str, team, ai, pla);
+
+            scrpt.rigidbody2d.rotation = UnityEngine.Random.Range(-180, 180);//TODO: fix this; implement random angle
 
             return scrpt;
         }

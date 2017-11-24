@@ -9,21 +9,22 @@ namespace Warrior
         private WarriorController whoShoots;
         private float damage;
         private Vector3 speed;
+        private Rigidbody2D body;
 
         public void Initialize(Vector2 start, Vector2 direction, float damage, WarriorController shooter)
         {
-            this.transform.position = start;
-            transform.up = direction;
+            body = GetComponent<Rigidbody2D>();
+            body.position = start;
+
+            body.AddRelativeForce(direction * HelperConstants.projectileAccel, ForceMode2D.Impulse);
+
             this.damage = damage;
             this.whoShoots = shooter;
-            speed = Vector3.up * HelperConstants.projectileSpeed;
         }
 
         public void Tick()
         {
-            speed *= 0.97f;
-            transform.Translate(speed);
-            if (speed.magnitude < 0.1)
+            if (body.velocity.magnitude < 1)
             {
                 Die();
             }

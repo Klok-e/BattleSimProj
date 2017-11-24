@@ -44,15 +44,15 @@ public static class Helpers
     #region Normalize overloads
 
     /// <param name="x">to normalize</param>
-    /// <param name="min">min value of x</param>
-    /// <param name="max">max value of x</param>
+    /// <param name="minX">min value of x</param>
+    /// <param name="maxX">max value of x</param>
     /// <param name="isZeroOneRange">if true then normalizes to 0..1, else - -1..1</param>
     /// <returns></returns>
-    public static double NormalizeNumber(double x, double min, double max, bool isZeroOneRange = true)
+    public static double NormalizeNumber(double x, double minX, double maxX, bool isZeroOneRange = true)
     {
-        Debug.Assert(min <= x && x <= max);
+        Debug.Assert(minX <= x && x <= maxX);
 
-        double ans = (x - min) / (max - min);
+        double ans = (x - minX) / (maxX - minX);
         if (!isZeroOneRange)
         {
             ans = -1 + 2 * ans;
@@ -126,13 +126,19 @@ public static class Helpers
 public static class HelperConstants
 {
     public const string saveDirectory = "/save/";
-    public const int totalAmountOfSensors = 22;
+    public const int totalAmountOfSensors = 17;
     public const int totalAmountOfOutputsOfNet = 4;
-    public static float speedMultOfWa = 0.15f;
+
+    public const int dataRefreshFrequency = 3;
+    public static float speedMultOfWa = 0.2f;
+    public static float projectileAccel = 0.6f;
+
     public static int complexityThreshold = 500;
     public static int warriorSpawnOffset = 4;
-    public static float warriorRotationSpeed = 10f;
-    public static float projectileSpeed = 0.4f;
+    public static float warriorRotationSpeed = 2f;
+
+    public const float warrPushForce = 0.4f;
+
     public static int evaluationsPerGeneration = 3;
     public static int ticksPerEvaluation = 1000;
 
@@ -146,7 +152,7 @@ public static class HelperConstants
     //public const int minNumberOfWarriors = 10;
     //public const int minSizeOfMap = 10;
 
-    public static float brushSize = 1;
+    public static float brushSize = 0.6f;
 
     public const string warriorTag = "Warrior";
     public const string obstacleTag = "Obstacle";

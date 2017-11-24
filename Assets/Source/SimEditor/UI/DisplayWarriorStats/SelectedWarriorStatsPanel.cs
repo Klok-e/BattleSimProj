@@ -43,7 +43,7 @@ namespace SimEditor
                 obj.transform.localScale = Vector3.one;
 
                 var scrpt = obj.GetComponent<WarrViewCellScript>();
-                scrpt.Initialize(0, 1);
+                scrpt.Initialize(-1, 1);
                 cells.Add(scrpt);
             }
             outputCells = cells.ToArray();

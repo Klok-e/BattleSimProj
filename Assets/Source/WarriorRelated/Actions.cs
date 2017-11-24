@@ -139,23 +139,28 @@ namespace Warrior
                 if (isFinished)
                 {
                     var posBeforeMove = moves.transform.position;
-                    var moveToPos = moves.transform.TransformPoint(Vector3.up * speed);
 
-                    var rigidBody = moves.GetComponent<Rigidbody2D>();
-                    rigidBody.MovePosition(moveToPos);
-                    rigidBody.MoveRotation(rigidBody.rotation + rotateBy);
+                    var rigidBody = moves.rigidbody2d;
+                    rigidBody.AddRelativeForce(Vector2.up * speed, ForceMode2D.Impulse);
+
+                    float torque = rotateBy;
+                    //torque = rigidBody.angularVelocity > HelperConstants.warriorRotationSpeedMax && rotateBy > 0 ? 0 : rotateBy;//ang vel exceeds max
+                    //torque = rigidBody.angularVelocity < -HelperConstants.warriorRotationSpeedMax && rotateBy < 0 ? 0 : rotateBy;
+                    rigidBody.AddTorque(torque);
 
                     var plOwnerCurrPos = moves.PlayerOwner.transform.position;
                     var plOwnerNextPos = plOwnerCurrPos + (Vector3)moves.PlayerOwner.nextPosChange;
 
                     moves.positionsDuringSomeTime.Add(posBeforeMove);//save position to calculate avg speed later
-                    var posWillMostLikelyMove = moves.transform.TransformPoint(Vector3.up * Helpers.AvgSpeedWithPositions(moves.positionsDuringSomeTime));//TODO: pos will most likely move
+                    var posWillMostLikelyMove = moves.transform.TransformPoint(Vector3.up * Helpers.AvgSpeedWithPositions(moves.positionsDuringSomeTime));
 
                     var distMovedTowPl = Vector3.Distance(posBeforeMove, plOwnerCurrPos) - Vector3.Distance(posWillMostLikelyMove, plOwnerNextPos);
-                    var distToPl = Vector3.Distance(moves.transform.position, plOwnerCurrPos);
+                    var sqrDistToPl = (moves.transform.position - plOwnerCurrPos).sqrMagnitude;
+
+                    moves.stats.distToFlagCoefBonus += 1 / (sqrDistToPl + 1);//farther the flag, less added
 
                     if (distMovedTowPl > 0)
-                        moves.stats.passedToFlagDistCoef += distMovedTowPl / (Mathf.Pow(distToPl, 2) + 1);
+                        moves.stats.passedToFlagDistCoef += distMovedTowPl / (sqrDistToPl + 1);
                     else
                         moves.stats.passedFromFlagDistCoef += distMovedTowPl;
                 }

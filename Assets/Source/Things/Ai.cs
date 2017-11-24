@@ -29,6 +29,7 @@ public class NeuralAI
     {
         if (network != null)
         {
+            Debug.Assert(inp != null);
             Debug.Assert(network.InputCount == inputsNum);
             Debug.Assert(network.OutputCount == outputsNum);
 
